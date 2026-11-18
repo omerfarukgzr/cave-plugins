@@ -1,0 +1,33 @@
+{
+  "catalogVersion": 1,
+  "name": "Cave",
+  "owner": "omerfarukgzr",
+  "plugins": [
+    {
+      "id": "omerfarukgzr.git",
+      "source": { "kind": "git", "url": "https://github.com/omerfarukgzr/cave-plugins", "ref": "main", "path": "git" },
+      "description": "IntelliJ tarzı Git arayüzü: Commit ve Git sekmeleri sağ kolonda, diff ortada.",
+      "categories": ["git"],
+      "releases": [
+        {
+          "version": "0.1.0",
+          "commit": "fb59ea819a36b9f68a8f3fd6c541cf4ab4348738",
+          "contentHash": "2723a07b49c23ef42bc9fe91fd51b1995ae2b96b0d3e996e1227c5917075eff5",
+          "execution": "trusted",
+          "minimumCave": "0.1",
+          "name": "Git",
+          "capabilities": [],
+          "contributes": [
+            { "kind": "panel", "name": "Commit" },
+            { "kind": "panel", "name": "Git" },
+            { "kind": "centre", "name": "Git" }
+          ],
+          "repository": "https://github.com/omerfarukgzr/cave-plugins",
+          "updatedAt": "2026-11-18T18:02:50+03:00",
+          "changelog": "İlk sürüm.",
+          "symbol": "arrow.triangle.branch"
+        }
+      ]
+    }
+  ]
+}
