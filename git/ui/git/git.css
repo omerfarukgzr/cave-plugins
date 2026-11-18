@@ -1,0 +1,383 @@
+/* Git prototype: tokens and the shared components (ui.js). Views add their own files (git-log.css, …).
+   Two skins. "default": IntelliJ's layout, labels, icons and status colors drawn with a warm dark palette of its
+   own (../css/tokens.css), the system font, rounded buttons and menus. data-git-skin="intellij" on <html>: IntelliJ's New UI dark palette and controls. */
+
+:root {
+  /* ---- surfaces and text (the default skin's palette, ../css/tokens.css) */
+  --g-panel: #262624;                       /* tool windows, popups, dialogs */
+  --g-editor: #1e1e1d;                      /* diff, commit message, fields */
+  --g-raised: #31312f;                      /* grouped fill, secondary button */
+  --g-line: rgba(255, 255, 255, .08);       /* hairlines between panes */
+  --g-line-strong: rgba(255, 255, 255, .12);
+  --g-text: #ecebe8;
+  --g-dim: #a7a6a2;                         /* second lines, paths, counts */
+  --g-muted: #8a8984;                       /* hints, section heads */
+  --g-disabled: rgba(236, 235, 232, .38);
+  --g-icon: #cfcec9;
+  --g-hover: rgba(255, 255, 255, .07);
+  --g-press: rgba(255, 255, 255, .12);
+  --g-select: rgba(76, 141, 255, .24);      /* selected row, pane focused */
+  --g-select-idle: rgba(255, 255, 255, .09);/* selected row, focus elsewhere */
+  --g-accent: #4c8dff;                      /* checked boxes, tab underline, focus */
+  --g-accent-soft: rgba(76, 141, 255, .16);
+  --g-accent-line: rgba(76, 141, 255, .45);
+  --g-link: #9fc6ff;
+  --g-focus: #0a84ff;
+  --g-shadow: 0 18px 50px rgba(0, 0, 0, .5), 0 2px 8px rgba(0, 0, 0, .35);
+  --g-scrim: rgba(0, 0, 0, .42);
+
+  /* ---- geometry */
+  --g-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --g-mono: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+  --g-size: 13px;
+  --g-row: 24px;                            /* trees and lists */
+  --g-log-row: 26px;                        /* the log table (IntelliJ's default; 24 in its compact mode) */
+  --g-toolbar: 36px;
+  --g-radius: 7px;                          /* tool buttons, rows, fields in toolbars */
+  --g-radius-popup: 14px;
+  --g-radius-dialog: 16px;
+  --g-btn-h: 30px;
+  --g-btn-radius: 9px;
+  --g-btn-primary-bg: #ecebe8;
+  --g-btn-primary-fg: #1e1e1d;
+  --g-btn-bg: #31312f;
+  --g-btn-border: rgba(255, 255, 255, .1);
+  --g-field-bg: #1e1e1d;
+  --g-field-border: rgba(255, 255, 255, .1);
+  --g-field-radius: 8px;
+  --g-check-border: rgba(255, 255, 255, .28);
+
+  /* ---- IntelliJ's own meanings (same in both skins): file status */
+  --g-modified: #70aeff;
+  --g-added: #73bd79;
+  --g-deleted: #6f737a;
+  --g-unversioned: #e88f89;
+  --g-conflict: #de6a66;
+  --g-ignored: #d69a6b;
+  --g-merged: #cf84cf;
+  /* a drop target while files are dragged (DragAndDrop.rowBackground / DragAndDrop.borderColor, D-kaynak) */
+  --g-dnd-row: #3573f026;
+  --g-dnd-border: #3574f0;
+  /* diff blocks: fill, the stronger "word" fill, and the gutter stripe */
+  --g-diff-mod: #2a3b55;
+  --g-diff-mod-word: #385570;
+  --g-diff-mod-stripe: #43698d;
+  --g-diff-ins: #29402f;
+  --g-diff-ins-word: #375239;
+  --g-diff-ins-stripe: #447152;
+  --g-diff-del: #45474a;
+  --g-diff-del-word: #5c5f63;
+  --g-diff-del-stripe: #656e76;
+  --g-diff-conflict: #482c2f;
+  --g-diff-conflict-word: #6b3237;
+  --g-diff-conflict-stripe: #8f5247;
+  /* ref labels and markers in the log */
+  --g-ref-head: #f2c55c;
+  --g-ref-local: #57965c;
+  --g-ref-remote: #955ae0;
+  --g-ref-tag: #9da0a8;
+  --g-incoming: #548af7;
+  --g-outgoing: #57965c;
+  --g-favorite: #f2c55c;
+  --g-graph-default: #ecebe8;
+  --g-current-branch-row: rgba(76, 141, 255, .07);
+  --g-info: #548af7;
+  --g-ok: #57965c;
+  --g-warn: #f2c55c;
+  --g-error: #db5c5c;
+
+  --g-proto-bar: 32px;
+}
+
+:root[data-git-skin="intellij"] {
+  --g-panel: #2b2d30;
+  --g-editor: #1e1f22;
+  --g-raised: #393b40;
+  --g-line: #1e1f22;
+  --g-line-strong: #393b40;
+  --g-text: #dfe1e5;
+  --g-dim: #9da0a8;
+  --g-muted: #868a91;
+  --g-disabled: #6f737a;
+  --g-icon: #ced0d6;
+  --g-hover: #393b40;
+  --g-press: #43454a;
+  --g-select: #2e436e;
+  --g-select-idle: #43454a;
+  --g-accent: #3574f0;
+  --g-accent-soft: #25324d;
+  --g-accent-line: #35538f;
+  --g-link: #548af7;
+  --g-focus: #3574f0;
+  --g-font: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --g-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --g-radius: 4px;
+  --g-radius-popup: 8px;
+  --g-radius-dialog: 8px;
+  --g-btn-h: 28px;
+  --g-btn-radius: 4px;
+  --g-btn-primary-bg: #3574f0;
+  --g-btn-primary-fg: #ffffff;
+  --g-btn-bg: #2b2d30;
+  --g-btn-border: #4e5157;
+  --g-field-bg: #2b2d30;
+  --g-field-border: #4e5157;
+  --g-field-radius: 4px;
+  --g-check-border: #6f737a;
+  --g-graph-default: #dfe1e5;
+  --g-current-branch-row: rgba(53, 116, 240, .09);
+}
+
+/* ---------------------------------------------------------------- base */
+.g-root, .g-popup, .g-dialog, .g-balloons, .g-menu {
+  font-family: var(--g-font);
+  font-size: var(--g-size);
+  line-height: 1.3;
+  color: var(--g-text);
+  -webkit-font-smoothing: antialiased;
+}
+.g-root *, .g-popup *, .g-dialog *, .g-balloons * { box-sizing: border-box; }
+.g-root button, .g-popup button, .g-dialog button, .g-balloons button { font: inherit; color: inherit; }
+.g-root ::selection, .g-dialog ::selection { background: var(--g-select); }
+.g-root :focus-visible, .g-popup :focus-visible, .g-dialog :focus-visible { outline: 2px solid var(--g-focus); outline-offset: -1px; }
+.g-tree:focus-visible, .g-scroll:focus-visible { outline: none; }
+/* a field's wrapper draws the focus ring (.g-field, .gm-combo): the input inside adds no second one */
+.g-field .g-input:focus-visible, .gm-combo .g-input:focus-visible { outline: none; }
+.g-mono { font-family: var(--g-mono); font-size: 12px; }
+.g-dim { color: var(--g-dim); }
+.g-grow { flex: 1 1 0; min-width: 0; min-height: 0; }
+.g-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.g-line-row { display: flex; align-items: center; min-width: 0; }
+.g-scroll { overflow: auto; min-height: 0; min-width: 0; }
+.g-root ::-webkit-scrollbar, .g-popup ::-webkit-scrollbar, .g-dialog ::-webkit-scrollbar { width: 10px; height: 10px; }
+.g-root ::-webkit-scrollbar-thumb, .g-popup ::-webkit-scrollbar-thumb, .g-dialog ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .16); border-radius: 5px; border: 2px solid transparent; background-clip: content-box;
+}
+.g-root ::-webkit-scrollbar-thumb:hover, .g-dialog ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .28); border: 2px solid transparent; background-clip: content-box; }
+.g-root ::-webkit-scrollbar-corner, .g-dialog ::-webkit-scrollbar-corner { background: transparent; }
+
+/* ---------------------------------------------------------------- icons */
+.g-ic { display: inline-flex; flex: none; width: 16px; height: 16px; align-items: center; justify-content: center; }
+.g-ic svg { width: 100%; height: 100%; display: block; }
+.g-ic-missing { border: 1px dashed var(--g-muted); border-radius: 3px; }
+.g-file-ic { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------- buttons */
+.g-btn {
+  height: var(--g-btn-h); padding: 0 14px; border-radius: var(--g-btn-radius); border: 1px solid var(--g-btn-border);
+  background: var(--g-btn-bg); color: var(--g-text); font-weight: 600; white-space: nowrap; cursor: pointer;
+  transition: filter .12s ease-out, transform .08s ease-out;
+}
+.g-btn:hover:not(:disabled) { filter: brightness(1.14); }
+.g-btn:active:not(:disabled) { filter: brightness(.9); transform: scale(.98); }
+.g-btn:disabled { opacity: .4; cursor: default; }
+.g-btn.primary { background: var(--g-btn-primary-bg); color: var(--g-btn-primary-fg); border-color: transparent; }
+.g-btn.primary:hover:not(:disabled) { filter: brightness(1.06); }
+.g-btn.danger { background: transparent; color: var(--g-error); border-color: color-mix(in srgb, var(--g-error) 45%, transparent); }
+.g-btn.small { height: 26px; padding: 0 11px; border-radius: calc(var(--g-btn-radius) - 2px); font-size: 12px; font-weight: 500; }
+:root[data-git-skin="intellij"] .g-btn { font-weight: 400; padding: 0 16px; }
+
+.g-tool {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: none;
+  min-width: 26px; height: 26px; padding: 0 5px; border: 0; border-radius: var(--g-radius); background: transparent; color: var(--g-text); cursor: pointer;
+}
+.g-tool:hover:not(:disabled) { background: var(--g-hover); }
+.g-tool:active:not(:disabled), .g-tool.on { background: var(--g-press); }
+.g-tool:disabled { opacity: .35; cursor: default; }
+.g-tool.with-label { padding: 0 8px; }
+
+.g-link, .g-root .g-link, .g-popup .g-link, .g-dialog .g-link, .g-balloons .g-link { background: none; border: 0; padding: 0; color: var(--g-link); cursor: pointer; text-align: left; }
+.g-link:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------------- checkbox, radio */
+.g-check { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; flex: none; position: relative; }
+.g-check input { position: absolute; opacity: 0; width: 16px; height: 16px; margin: 0; cursor: pointer; }
+.g-check-box {
+  width: 14px; height: 14px; flex: none; border-radius: 3px; border: 1px solid var(--g-check-border); background: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.g-check input:checked + .g-check-box, .g-check input:indeterminate + .g-check-box { background: var(--g-accent); border-color: var(--g-accent); }
+.g-check input:checked + .g-check-box::after {
+  content: ""; width: 8px; height: 4px; border-left: 1.6px solid #fff; border-bottom: 1.6px solid #fff; transform: translateY(-1px) rotate(-45deg);
+}
+.g-check input:indeterminate + .g-check-box::after { content: ""; width: 8px; height: 1.6px; background: #fff; }
+.g-check input:focus-visible + .g-check-box { outline: 2px solid var(--g-focus); outline-offset: 1px; }
+.g-check.radio .g-check-box { border-radius: 50%; }
+.g-check.radio input:checked + .g-check-box::after { width: 6px; height: 6px; border: 0; border-radius: 50%; background: #fff; transform: none; }
+.g-check.disabled { opacity: .45; cursor: default; }
+.g-check-hint { color: var(--g-dim); }
+
+/* ---------------------------------------------------------------- fields */
+.g-field {
+  display: flex; align-items: center; gap: 6px; min-width: 0; height: 28px; padding: 0 8px;
+  background: var(--g-field-bg); border: 1px solid var(--g-field-border); border-radius: var(--g-field-radius);
+}
+.g-field:focus-within { border-color: var(--g-focus); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g-focus) 25%, transparent); }
+.g-field:has(textarea) { height: auto; padding: 6px 8px; align-items: stretch; }
+.g-input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: var(--g-text); font: inherit; padding: 0; resize: none; }
+.g-input.mono { font-family: var(--g-mono); font-size: 12px; }
+.g-input::placeholder { color: var(--g-muted); }
+
+/* ---------------------------------------------------------------- toolbars and tabs */
+.g-toolbar { display: flex; align-items: center; gap: 2px; height: var(--g-toolbar); padding: 0 6px; flex: none; min-width: 0; }
+.g-toolbar.vertical { flex-direction: column; width: 38px; height: auto; padding: 5px 0; }
+.g-toolbar-sep { width: 1px; height: 18px; background: var(--g-line-strong); margin: 0 4px; flex: none; }
+.g-toolbar.vertical .g-toolbar-sep { width: 22px; height: 1px; margin: 4px 0; }
+.g-spacer { flex: 1 1 0; min-width: 0; }
+
+/* ---------------------------------------------------------------- tree */
+.g-tree { overflow: auto; min-height: 0; outline: none; padding: 2px 0; user-select: none; -webkit-user-select: none; }
+.g-row {
+  display: flex; align-items: center; gap: 5px; height: var(--g-row); padding-right: 8px; margin: 0 6px; border-radius: var(--g-radius);
+  white-space: nowrap; cursor: default; min-width: 0;
+}
+.g-row:hover { background: var(--g-hover); }
+.g-row.sel { background: var(--g-select-idle); }
+.g-tree:focus .g-row.sel, .g-tree:focus-within .g-row.sel { background: var(--g-select); }
+.g-row-chev { width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--g-dim); transition: transform .1s; }
+.g-row-chev.open { transform: rotate(90deg); }
+.g-row-chev.none { visibility: hidden; }
+.g-row-label { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.g-row-label.bold { font-weight: 600; }
+.g-row-label.italic { font-style: italic; }
+.g-row-label.strike { text-decoration: line-through; }
+.g-row-dim { color: var(--g-dim); overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.g-row-right { margin-left: auto; padding-left: 8px; color: var(--g-dim); display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.g-tree-empty { padding: 14px 16px; color: var(--g-dim); }
+
+/* ---------------------------------------------------------------- popup, menu */
+#g-layer { position: fixed; inset: 0; pointer-events: none; z-index: 900; }
+#g-layer > * { pointer-events: auto; }
+.g-popup {
+  position: fixed; z-index: 910; max-height: calc(100% - 16px); display: flex; flex-direction: column;
+  background: var(--g-panel); border: 1px solid var(--g-line-strong); border-radius: var(--g-radius-popup); box-shadow: var(--g-shadow); overflow: hidden;
+}
+.g-menu { padding: 5px; min-width: 200px; overflow: auto; }
+.g-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; height: 30px; padding: 0 9px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--g-text); text-align: left; cursor: default; white-space: nowrap;
+}
+.g-menu-item:hover:not(:disabled) { background: var(--g-hover); }
+.g-menu-item:disabled { opacity: .38; }
+.g-menu-item.danger { color: var(--g-error); }
+.g-menu-check { width: 12px; flex: none; }
+.g-menu-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.g-menu-key { color: var(--g-muted); font-size: 12px; margin-left: 16px; }
+.g-menu-sep { height: 1px; margin: 5px 9px; background: var(--g-line); }
+:root[data-git-skin="intellij"] .g-menu-item { height: 24px; border-radius: 4px; }
+
+/* ---------------------------------------------------------------- dialog */
+.g-shade { position: fixed; inset: 0; z-index: 905; background: var(--g-scrim); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.g-dialog {
+  display: flex; flex-direction: column; min-width: 320px; max-width: 100%; max-height: 100%;
+  background: var(--g-panel); border: 1px solid var(--g-line-strong); border-radius: var(--g-radius-dialog); box-shadow: var(--g-shadow); overflow: hidden;
+}
+.g-dialog-title { display: flex; align-items: center; height: 40px; padding: 0 8px 0 16px; flex: none; font-weight: 600; border-bottom: 1px solid var(--g-line); }
+.g-dialog-title-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-dialog-x { width: 26px; height: 26px; border: 0; border-radius: var(--g-radius); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.g-dialog-x:hover { background: var(--g-hover); }
+.g-dialog-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+/* the buttons wrap to a second line (kept to the right) where they do not fit, as in a 385 px side panel with three of them */
+.g-dialog-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; padding: 12px 16px; flex: none; border-top: 1px solid var(--g-line); }
+/* The left part (a help button, a "Don't show again" box) is as wide as what it holds and takes the room that is
+   left. With no width of its own (flex-basis 0) it gave all of it to the buttons in a narrow page and its content ran
+   out under them; now a footer that does not fit breaks into rows instead. Empty, it takes no row. */
+.g-dialog-left { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.g-dialog-left:empty { display: none; }
+.g-confirm-text { line-height: 1.45; }
+.g-confirm-detail { margin-top: 6px; color: var(--g-dim); overflow-wrap: anywhere; }   /* a long path breaks instead of scrolling the dialog sideways */
+/* Report a Problem (report.js): what the report carries, shown whole and selectable, the person's own words under it */
+.g-report { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.g-report-note { color: var(--g-dim); line-height: 1.45; }
+.g-report-data {
+  margin: 0; padding: 8px 10px; max-height: 132px; overflow: auto; border: 1px solid var(--g-line); border-radius: var(--g-radius);
+  font-family: var(--g-mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+  user-select: text; -webkit-user-select: text; outline: none;
+}
+.g-report-data:focus-visible { border-color: var(--g-focus); }
+.g-report-hint { line-height: 1.35; }
+.g-report-refused { color: var(--g-error); line-height: 1.35; }
+/* update.js: the dialog of a newer release, and the dot on the Options button while one is out (in the warning color
+   when the running one is below the minimum). Nothing of it covers or locks the page. */
+.g-update { display: flex; flex-direction: column; gap: 10px; }
+.g-update-text { line-height: 1.5; overflow-wrap: anywhere; }
+.g-update-note { padding: 8px 10px; border-radius: var(--g-radius); background: var(--g-accent-soft); line-height: 1.5; overflow-wrap: anywhere; }
+.g-update-steps { color: var(--g-dim); line-height: 1.5; overflow-wrap: anywhere; }
+.g-update-status { color: var(--g-dim); line-height: 1.5; overflow-wrap: anywhere; }
+.g-update-status:empty { display: none; }
+.g-update[data-state="required"] .g-update-note { background: color-mix(in srgb, var(--g-warn) 16%, transparent); }
+.wb-options.has-update { position: relative; }
+.wb-options.has-update::after { content: ''; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--g-accent); pointer-events: none; }
+.wb-options.has-update.update-required::after { background: var(--g-warn); }
+/* the screenshot area (report-picture.js): a dashed box to drop a picture on or to click; with a picture, its thumbnail */
+/* the dashes are plain to see before anything is dragged: they are what says "drop here" (the owner, 17 Nov 2026) */
+.g-report-zone {
+  display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 12px 14px; min-width: 0;
+  border: 2px dashed color-mix(in srgb, var(--g-text) 42%, transparent); border-radius: 10px; cursor: pointer; outline: none;
+  background: color-mix(in srgb, var(--g-text) 3%, transparent);
+  transition: border-color .12s, background-color .12s;
+}
+.g-report-zone:hover, .g-report-zone:focus-visible, .g-report-zone.over { border-color: var(--g-focus); background: color-mix(in srgb, var(--g-focus) 9%, transparent); }
+.g-report-zone.over { border-style: solid; }
+/* with pictures: each one listed above the box with its thumbnail, the box smaller ("add another"), a line under it */
+.g-report-pictures { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.g-report-list { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.g-report-list:empty { display: none; }
+.g-report-item { display: flex; align-items: center; gap: 10px; padding: 5px 8px; min-width: 0; border: 1px solid var(--g-line); border-radius: var(--g-radius); }
+.g-report-zone.more { min-height: 52px; padding-top: 8px; padding-bottom: 8px; }
+.g-report-pics-status { line-height: 1.35; overflow-wrap: anywhere; }
+.g-report-pics-status:empty { display: none; }
+.g-report-zone.bad { border-color: var(--g-error); }
+.g-report-zone-ic { flex: none; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--g-hover); }
+.g-report-zone-words { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.g-report-zone-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-report-zone.bad .g-report-zone-title { color: var(--g-error); white-space: normal; }
+.g-report-zone-sub { color: var(--g-dim); line-height: 1.35; overflow-wrap: anywhere; }
+.g-report-thumb { flex: none; width: 72px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid var(--g-line); background: var(--g-hover); }
+.g-report-zone-x { flex: none; width: 24px; height: 24px; border: 0; border-radius: var(--g-radius); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.g-report-zone-x:hover { background: var(--g-hover); }
+.g-report-zone-x:focus-visible { outline: 2px solid var(--g-focus); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .g-report-zone { transition: none; } }
+.g-report-dlg { max-width: calc(100vw - 16px); }
+.g-label { color: var(--g-dim); }
+.g-form-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.g-form-row > .g-label { flex: 0 0 auto; }
+.g-form-row > .g-field { flex: 1; }
+
+/* ---------------------------------------------------------------- balloons */
+.g-balloons { position: fixed; right: 16px; bottom: 16px; z-index: 920; display: flex; flex-direction: column; gap: 8px; width: 360px; max-width: calc(100% - 32px); pointer-events: none; }
+.g-balloon {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: 9px; padding: 11px 10px 11px 12px;
+  background: var(--g-raised); border: 1px solid var(--g-line-strong); border-radius: 10px; box-shadow: var(--g-shadow);
+  animation: g-balloon-in .18s ease-out;
+}
+.g-balloon.out { opacity: 0; transition: opacity .15s; }
+.g-balloon-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.g-balloon-title { font-weight: 600; overflow-wrap: anywhere; }
+.g-balloon-text { color: var(--g-dim); overflow-wrap: anywhere; line-height: 1.4; white-space: pre-line; max-height: 40vh; overflow: auto; }   /* lines of a text (file lists, git output) stay lines */
+.g-balloon-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 3px; }
+.g-balloon-x { width: 20px; height: 20px; border: 0; border-radius: 5px; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; }
+.g-balloon:hover .g-balloon-x, .g-balloon-x:focus-visible { opacity: 1; }
+.g-balloon-x:hover { background: var(--g-hover); }
+@keyframes g-balloon-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+:root[data-git-skin="intellij"] .g-balloon { border-radius: 8px; background: #393b40; }
+
+/* ---------------------------------------------------------------- splitters */
+.g-split { flex: none; position: relative; z-index: 2; background: var(--g-line); touch-action: none; }
+.g-split.h { width: 1px; cursor: col-resize; }
+.g-split.v { height: 1px; cursor: row-resize; }
+.g-split::after { content: ""; position: absolute; }
+.g-split.h::after { inset: 0 -4px; }
+.g-split.v::after { inset: -4px 0; }
+.g-split:hover, body.g-resizing-h .g-split.h:active, body.g-resizing-v .g-split.v:active { background: var(--g-accent-line); }
+body.g-resizing-h, body.g-resizing-h * { cursor: col-resize !important; user-select: none !important; -webkit-user-select: none !important; }
+body.g-resizing-v, body.g-resizing-v * { cursor: row-resize !important; user-select: none !important; -webkit-user-select: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .g-balloon, .g-btn, .g-row-chev { animation: none; transition: none; }
+}
+
+/* menu.js: a disabled item with its reason (`why`) under the label (IntelliJ shows the reason in the status bar) */
+.cm-row.has-why { height: auto; min-height: var(--row-height); padding-top: 3px; padding-bottom: 3px; }
+.cm-two { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; }
+.cm-why { height: auto; white-space: normal; color: var(--shell-text); }

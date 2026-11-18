@@ -1,0 +1,43 @@
+NOTICE
+
+This prototype includes material taken from the IntelliJ IDEA Community Edition
+source code ("intellij-community").
+
+  Source repository : https://github.com/JetBrains/intellij-community
+  Commit            : f5ca7abe2186ea90603898cff27a38d88fc51405
+  Commit date       : 2026-11-14T05:37:07Z (branch master, build.txt 271.SNAPSHOT)
+  License           : Apache License, Version 2.0
+                      https://www.apache.org/licenses/LICENSE-2.0
+                      (a copy: LICENSE-APACHE-2.0.txt in this folder)
+  Copyright         : Copyright 2000-2026 JetBrains s.r.o. and contributors
+
+Upstream NOTICE.txt (reproduced as required by section 4(d) of the license):
+
+  This software includes code from IntelliJ IDEA
+  Copyright (C) JetBrains s.r.o.
+  https://www.jetbrains.com/idea/
+
+What was taken
+
+  1. icons/*.svg
+     Unmodified copies of SVG icons from the upstream repository. Only the
+     file names were changed (flat folder, descriptive names). The original
+     path of every file is listed in icons/index.md. The copyright comment
+     inside each SVG file is kept as is.
+     Upstream locations:
+       platform/icons/src/expui/...
+       platform/dvcs-impl/shared/resources/icons/...
+       platform/vcs-impl/resources/icons/...
+       platform/vcs-log/impl/resources/icons/...
+       plugins/git4idea/backend/resources/icons/...
+
+  2. Constants, colour values, label texts and algorithm descriptions
+     Values (theme colours, layout constants, message bundle texts) and the
+     commit graph layout / painting logic were read from the upstream source
+     and are re-implemented or quoted in this prototype and in the research
+     notes. Code derived from upstream files is a modification of that work
+     and stays under the Apache License, Version 2.0.
+
+The upstream code is provided "AS IS", without warranties or conditions of
+any kind. "IntelliJ IDEA" and "JetBrains" are trademarks of JetBrains s.r.o.;
+this prototype is not affiliated with or endorsed by JetBrains.

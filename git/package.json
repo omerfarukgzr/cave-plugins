@@ -1,0 +1,21 @@
+{
+  "name": "git-panel",
+  "version": "0.1.0",
+  "description": "IntelliJ-style Git panel: a standard base (Node engine + web UI) with separate host plugins, or a plain browser.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "bin": { "git-panel": "bin/git-panel" },
+  "scripts": {
+    "test": "node --test \"test/core/*.test.js\" \"test/ui/*.test.js\" \"test/hosts/*.test.js\" && npm run test:e2e",
+    "test:hosts": "node --test \"test/hosts/*.test.js\"",
+    "test:remote": "node --test \"test/remote/*.test.js\"",
+    "test:core": "node --test \"test/core/*.test.js\"",
+    "test:ui": "node --test \"test/ui/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"test/e2e/*.test.js\"",
+    "test:orca": "node --test --test-concurrency=1 \"test/hosts/orca-*.test.js\"",
+    "test:soak": "node --test test/soak/soak.test.js",
+    "orca": "node tools/orca-paket.mjs",
+    "start": "node server/cli.js serve"
+  }
+}

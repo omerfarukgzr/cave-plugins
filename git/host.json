@@ -1,0 +1,9 @@
+{
+  "id": "cave-git",
+  "label": "cave-git",
+  "dataDir": "cave-git",
+  "adapter": "page.js",
+  "homeEnv": [
+    "CAVE_PLUGIN_DATA"
+  ]
+}

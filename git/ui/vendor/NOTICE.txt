@@ -1,0 +1,18 @@
+Third-party files served with the Git Panel UI (no network access at run time)
+
+highlight-11.9.0.min.js
+  highlight.js 11.9.0 (common languages build), from
+  https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js, unmodified.
+  BSD 3-Clause License, see highlight-LICENSE.txt (from the 11.9.0 tag of github.com/highlightjs/highlight.js).
+
+file-icons.js
+  The file icon maps (the Seti theme of VS Code: file name / extension -> glyph and color), copied from the
+  approved prototype (its js/data-ikon.js); only the global's name changed (window.FileIconMaps).
+  The Seti glyph font is ../img/file-icons/seti.woff; both come from vscode's seti-ui theme, MIT License,
+  see ../img/file-icons/SETI-LICENSE.txt.
+
+../css/tokens.css
+  The default skin's color and size tokens, from the prototype (the owner's own design); comments rewritten.
+
+../git/icons/*.svg, ../git/icons.js
+  IntelliJ IDEA Community Edition icons, Apache License 2.0: see ../git/NOTICE.txt.

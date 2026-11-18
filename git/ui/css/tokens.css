@@ -1,0 +1,119 @@
+/* Color and size tokens of the default skin: a warm, always-dark macOS look (the system font, rounded menus and
+   panels). The approved prototype measured them from a native app; names that had no counterpart there got a
+   descriptive one. A color value is written only here. */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces and text */
+  --sidebar: #262624;                      /* menus, popups, confirmation cards, the file panel */
+  --stage: #1e1e1d;                        /* the stage, text fields */
+  --sh-group: #31312f;                     /* grouped rows inside a panel, secondary buttons */
+  --cv-seg-on: #3d3d3a;                    /* raised: a usage bar's track, an avatar */
+  --well: #141413;                         /* a sunken name field */
+  --text: #ecebe8;
+  --text-rgb: 236, 235, 232;
+  --dim: rgba(236, 235, 232, .74);
+  --faint: rgba(236, 235, 232, .42);
+  --cv-dim: #a7a6a2;                       /* second lines, descriptions */
+  --shell-text: #8a8984;                   /* muted: section heads, hints */
+  --tab-text: #b5b4af;
+  --quiet: #6b6a66;                        /* upper-case section titles, arrows */
+  --cv-faint: #7d7c78;
+  --app-ic: #cfcec9;                       /* menu icons, initials */
+  --hover: rgba(255, 255, 255, .06);
+  --placeholder: rgba(255, 255, 255, .8);  /* a text field's placeholder (measured from the real drawing) */
+  --white: #ffffff;
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+
+  /* Lines and state fills */
+  --line: rgba(255, 255, 255, .07);        /* the top line of a menu's footer */
+  --cv-line: rgba(255, 255, 255, .08);     /* separators, button edges */
+  --col-line: rgba(255, 255, 255, .06);    /* the column edge of menus and the file panel */
+  --sh-press: rgba(255, 255, 255, .07);    /* a hovered row / the row chosen with the keyboard */
+  --soft-blue: 76, 141, 255;
+  --select: rgba(76, 141, 255, .16);       /* a selected file */
+
+  /* Accents */
+  --accent: #0a84ff;                       /* keyboard focus */
+  --sh-red: #ff5a4f;                       /* danger */
+  --cv-add: #4ccb7a;                       /* success */
+  --warning: #e8913f;
+  --usage-high: #e2b33f;
+  --in-use: #9fc6ff;
+  --update-dot: #6ea2ff;
+  --update-text: #c7d8ff;
+  --update-button: #3b7bff;
+  --system-orange: #ff9f0a;                /* the system orange (dark): a message in a menu, warning text */
+
+  /* Activity states */
+  --claude: #D97757;
+  --orange: #ff9500;                       /* working */
+  --blue: #5f87ff;                         /* waiting */
+  --green: #00d75f;                        /* done */
+  --red: #ff3b30;                          /* error */
+
+  /* Branch rows */
+  --branch-icon: #c9c9d0;
+  --branch-tab: #b4b4bc;
+  --branch-shell-tab: #7d7d86;
+  --branch-hint: #6b6b73;
+  --branch-badge: #4a4b52;
+
+  /* Window buttons */
+  --close-button: rgb(255, 94, 87);
+  --minimize-button: rgb(255, 189, 46);
+  --zoom-button: rgb(41, 201, 64);
+
+  /* Sizes */
+  --row-height: 30px;                      /* a menu or list row */
+  --menu-radius: 14px;
+  --panel-radius: 16px;
+  --window-radius: 12px;
+  --title-height: 52px;                    /* the title strip */
+  --editor-header: 36px;                   /* the editor's header, its tab strip */
+  --file-header: 40px;                     /* the file panel's header */
+  --menu-w: 222px;                         /* the side menu's width (200…480) */
+  --files-w: 420px;                        /* the file panel's width (260…1100) */
+
+  /* Fonts: the system font (SF Pro) and its monospaced face (SF Mono) */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* The editor tab strip: the workbench colors of a VS Code theme. An editor page that reports its theme writes over
+     them; until then they are the skin's own colors (the value after "??" is the fallback). */
+  --vsc-tabs-bg: var(--sidebar);           /* editorGroupHeader.tabsBackground ?? sidebar */
+  --vsc-tab-active-bg: var(--stage);       /* tab.activeBackground ?? stage */
+  --vsc-tab-inactive-bg: transparent;      /* tab.inactiveBackground ?? clear */
+  --vsc-tab-hover-bg: var(--sh-press);     /* tab.hoverBackground ?? press */
+  --vsc-tab-active-fg: var(--text);        /* tab.activeForeground ?? text */
+  --vsc-tab-inactive-fg: var(--tab-text);  /* tab.inactiveForeground ?? tab text */
+  --vsc-tab-border: var(--cv-line);        /* tab.border ?? line */
+
+  /* Code: VS Code Dark+ ("--code-*"); also used by the editor fallback and the terminal stand-in. */
+  --code-bg: #1e1e1e;
+  --code-fg: #d4d4d4;
+  --code-gutter: #858585;
+  --code-keyword: #569cd6;
+  --code-control: #c586c0;
+  --code-string: #ce9178;
+  --code-number: #b5cea8;
+  --code-comment: #6a9955;
+  --code-function: #dcdcaa;
+  --code-type: #4ec9b0;
+  --code-variable: #9cdcfe;
+
+  /* The prototype's stand-ins: the desktop and window imitations on the stage */
+  --desk: #000000;                         /* outside the window */
+  --win-shadow: rgba(0, 0, 0, .45);
+  --chrome-frame: #1f1f1f;
+  --chrome-bar: #3c3c3c;
+  --chrome-field: #282828;
+  --chrome-text: #e3e3e3;
+  --chrome-dim: #a8a8a8;
+  --term-bg: #15141b;
+  --term-bar: #2a2a2e;
+  --term-text: #d6d6d6;
+  --term-dim: #8b8b8b;
+  --native-menu: rgba(42, 42, 42, .94);    /* a native context menu imitation (file tree and editor tab) */
+}

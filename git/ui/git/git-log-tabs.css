@@ -1,0 +1,44 @@
+/* The History, Compare and "diff with working tree" tabs of the Git tool window (log-tabs-common.js,
+   log-history.js, log-compare.js).
+   Rows, ref labels, changed files and commit details are the Log's (git-log.css); the diff preview is the diff tab's (git-diff.css).
+   Only layout lives here; every color is one of git.css's variables. */
+
+.glt-root { position: relative; }
+
+/* ---------------------------------------------------------------- commit table: a virtual list, columns measured per list */
+.glt-table .gl-col { white-space: nowrap; flex: none; }
+.glt-table .glt-author { width: var(--glt-w-author); }
+.glt-table .glt-date { width: var(--glt-w-date); }
+.glt-table .glt-hash { width: var(--glt-w-hash); }
+.glt-table > .gl-empty { text-align: center; }
+.glt-path { flex: 0 1 auto; min-width: 0; margin: 0 6px; overflow: hidden; text-overflow: ellipsis; color: var(--g-muted); font-size: calc(var(--g-size) - 1px); }.glt-hash { font-family: var(--g-mono); font-size: calc(var(--g-size) - 1px); color: var(--g-dim); }
+.glt-refs { gap: 12px; }
+.glt-refs.compact { gap: 6px; }
+
+/* ---------------------------------------------------------------- History: [toolbar / revisions / message] | diff preview */
+.glt-hleft { flex: none; width: 40%; }
+.glt-root.no-preview > .glt-hleft { flex: 1 1 0 !important; width: auto !important; }
+.glt-bar { gap: 2px; }
+.gl-details.glt-hdetails { flex: none; height: 108px; padding: 10px 14px; }
+.glt-hdetails .gl-dwho { margin-top: 10px; color: var(--g-dim); }
+.glt-preview { flex: 1 1 0; min-width: 0; min-height: 0; position: relative; }
+.glt-pempty { margin: auto; padding: 12px; text-align: center; color: var(--g-dim); font-family: var(--g-font); font-size: var(--g-size); }
+
+/* ---------------------------------------------------------------- Compare: two lists | Changed Files over Commit Details */
+.glt-cleft { flex: 1 1 0; }
+.glt-cside { flex: 1 1 0; }
+.glt-chead, .glt-info { flex: none; height: 32px; display: flex; align-items: center; gap: 14px; padding: 0 12px; min-width: 0; white-space: nowrap; }
+.glt-chead { color: var(--g-dim); }
+.glt-chead-text, .glt-info-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.glt-chead b { color: var(--g-text); font-weight: 600; }
+.glt-swap, .g-root .glt-swap { flex: none; text-decoration: underline; }
+.gl-right.glt-cright { width: 36%; }
+
+/* ---------------------------------------------------------------- Changes between a branch and the working tree */
+.glt-bdiff { flex-direction: column; }
+.glt-info b { font-weight: 700; }
+
+/* ---------------------------------------------------------------- Show Repository at Revision, Compare Versions, Paths Affected (log-revisions.js) */
+.glr-repo, .glr-versions { flex-direction: column; }
+.glr-affected { height: 100%; min-height: 0; }
+.glr-affected-dlg .g-dialog-body { display: flex; flex-direction: column; min-height: 0; flex: 1 1 0; padding: 0; }

@@ -1,0 +1,82 @@
+/* The shell parts the Git UI needs, copied unchanged from the approved prototype's shell.css (each rule says which
+   native view it measures). Colors: tokens.css.
+   Menus (menu.js), text boxes (.t*), file icons (fileicons.js, Seti font). */
+
+/* SwiftUI Text: height = round(ascent) + ceil(descent), baseline round(ascent). lineLimit(1) + tail. */
+.t { display: block; flex: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t.shrink { flex: 0 1 auto; min-width: 0; }
+.t11 { font-size: 11px; line-height: 13px; height: 14px; }
+.t12 { font-size: 12px; line-height: 15px; height: 15px; }
+.t13 { font-size: 13px; line-height: 16px; height: 16px; }
+.cm-arrow { transform: translateY(.5px); }
+.cm-glyph { display: block; flex: none; }
+.cm-icon .cm-glyph { transform: translateY(1px); }
+
+/* ---- the pop-up menu (menu.js) ------------------------------------------------------------------------------- */
+#g-menu-layer { position: fixed; inset: 0; z-index: 1000; pointer-events: none; font: 13px/16px var(--font); color: var(--text); -webkit-font-smoothing: antialiased; }
+#g-menu-layer *, #g-menu-layer *::before, #g-menu-layer *::after { box-sizing: border-box; }
+/* VStack(spacing: 0) .padding(5) .frame(width:) Theme.sidebar, corner 14, edge --cv-line; appears in 0.12 s */
+.cmenu {
+  position: absolute; padding: 5px; border-radius: var(--menu-radius); background: var(--sidebar); pointer-events: auto;
+  box-shadow: inset 0 0 0 1px var(--cv-line), 0 0 0 .5px rgba(var(--black-rgb), .55), 0 10px 32px var(--win-shadow), 0 2px 6px rgba(var(--black-rgb), .25);
+  animation: cmenu-in .12s linear both; outline: none; cursor: default; -webkit-user-select: none; user-select: none;
+}
+@keyframes cmenu-in { from { opacity: 0; } to { opacity: 1; } }
+/* line: HStack(spacing: 9) 13pt .padding(.horizontal, 9) .frame(height: 30) corner 8; disabled 38 % */
+.cm-row { display: flex; align-items: center; gap: 9px; height: var(--row-height); padding: 0 9px; border-radius: 8px; color: var(--text); }
+.cm-row.is-lit { background: var(--sh-press); }
+.cm-row.is-disabled { opacity: .38; }
+.cm-check, .cm-icon { display: flex; flex: none; align-items: center; justify-content: center; width: 16px; }
+.cm-icon { color: var(--app-ic); }
+.cm-icon svg { width: 16px; height: 16px; display: block; }
+.cm-row.danger, .cm-row.danger .cm-icon { color: var(--sh-red); }
+.cm-title { flex: 0 1 auto; min-width: 0; }
+.cm-gap { flex: 1 1 8px; min-width: 8px; }
+.cm-arrow { color: var(--shell-text); }
+.cm-short { flex: none; color: var(--shell-text); font-size: 12px; line-height: 15px; }
+/* separator: 1pt line .padding(.horizontal, 9) .padding(.vertical, 5) */
+.cm-sep { height: 1px; margin: 5px 9px; background: var(--cv-line); }
+/* header: a section head (11 semibold, tracking 0.44, upper case) horizontal 9, height 24, bottom aligned */
+.cm-head { display: flex; align-items: flex-end; height: 24px; padding: 0 9px; }
+.cm-head span { font-weight: 600; letter-spacing: calc(.44px - .0012em); color: var(--shell-text); }
+/* NSMenu look (the file tree's and the editor tab's context menus are SwiftUI .contextMenu) */
+.cmenu.native { padding: 5px; border-radius: 8px; background: var(--native-menu); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); box-shadow: inset 0 0 0 .5px rgba(var(--white-rgb), .22), 0 0 0 .5px rgba(var(--black-rgb), .7), 0 10px 30px rgba(var(--black-rgb), .4); animation: none; }
+.cmenu.native .cm-row { height: 22px; padding: 0 9px; border-radius: 5px; gap: 6px; }
+.cmenu.native .cm-row.is-lit { background: var(--accent); color: var(--white); }
+.cmenu.native .cm-sep { margin: 5px 9px; background: rgba(var(--white-rgb), .12); }
+
+/* ---- File icons (FileIconView: 16x16 box; Seti glyph in its color) ------------------------------------------ */
+@font-face { font-family: "g-seti"; src: url("../img/file-icons/seti.woff") format("woff"); font-display: block; }
+.ficon { display: flex; flex: none; align-items: center; justify-content: center; width: 16px; height: 16px; overflow: visible; }
+.ficon-seti { position: relative; left: 1.5px; font: 19px/1 "g-seti"; white-space: nowrap; }
+/* a host theme's icon as a picture (Git.host.fileIcon, ui/git/look.js) */
+img.ficon { display: block; object-fit: contain; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+
+/* ---- icon buttons ---------------------------------------------------------------------------------------------- */
+.icon-btn {
+  display: flex; flex: none; align-items: center; justify-content: center; padding: 0; margin: 0; border: 0; font: inherit;
+  color: rgba(var(--text-rgb), .6); background: rgba(var(--white-rgb), .06);
+  box-shadow: inset 0 0 0 1px var(--cv-line); border-radius: 5px;
+}
+.icon-btn:hover { color: rgba(var(--text-rgb), .9); background: rgba(var(--white-rgb), .12); }
+.icon-btn:active { background: rgba(var(--white-rgb), .18); }
+.icon-btn.r4 { border-radius: 4px; }
+
+/* ---- Editor tab strip (EditorStageView / EditorTabsView): the center tab area of the workbench --------------- */
+.ed-head { position: relative; display: flex; flex: none; align-items: center; height: var(--editor-header); background: var(--vsc-tabs-bg); font: 13px/16px var(--font); }
+.ed-head::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--cv-line); pointer-events: none; }
+.ed-tabs { display: flex; flex: 0 1 auto; min-width: 0; height: 36px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.ed-tabs::-webkit-scrollbar { display: none; }
+/* EditorTabChip: HStack(spacing: 5) .padding(.leading, 10) .padding(.trailing, 5) .frame(height: 36) + a 1pt edge at the right */
+.etab { position: relative; display: flex; flex: none; align-items: center; gap: 5px; height: 36px; padding: 0 5px 0 10px; background: var(--vsc-tab-inactive-bg); color: var(--vsc-tab-inactive-fg); cursor: default; }
+.etab::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px; background: var(--vsc-tab-border); }
+.etab:hover { background: var(--vsc-tab-hover-bg); }
+.etab.is-active { background: var(--vsc-tab-active-bg); color: var(--vsc-tab-active-fg); }
+.etab-end { display: flex; flex: none; align-items: center; justify-content: center; width: 16px; height: 16px; }
+.etab-close { display: none; width: 16px; height: 16px; }
+.etab:hover .etab-close, .etab.is-active .etab-close, .etab-close:focus-visible { display: flex; }
+.etab-custom-icon { display: flex; flex: none; align-items: center; justify-content: center; width: 16px; height: 16px; }
+.etab-custom-icon svg { width: 16px; height: 16px; }
+
+/* ---- The focus sink (ui.js): a read-only text field that holds focus while an overlay is open ------------- */
+.g-sink { position: absolute; left: 0; top: 0; width: 1px; height: 1px; padding: 0; margin: 0; border: 0; opacity: 0; pointer-events: none; caret-color: transparent; }

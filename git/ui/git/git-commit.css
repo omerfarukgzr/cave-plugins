@@ -1,0 +1,167 @@
+/* Git prototype: the Commit view of the right column (commit.js) and the Rollback Changes dialog.
+   Layout follows IntelliJ's Commit tool window: toolbar, changes tree, then Amend row, message and the two buttons. */
+
+:root {
+  --gc-pad: 10px;                               /* side padding of the lower section */
+  --gc-area-bg: transparent;                    /* behind the message and the buttons */
+  --gc-msg-bg: var(--g-field-bg);
+  --gc-msg-border: var(--g-field-border);
+  --gc-msg-radius: var(--g-field-radius);
+  --gc-msg-size: 12px;
+  --gc-area-pad: 0 var(--gc-pad) var(--gc-pad);
+  --gc-buttons-pad: 0;
+  --gc-toolbar-gap: 3px;
+}
+/* IntelliJ's own look (commit__ij_VCS_commit_tool_window): the message and the buttons are one borderless block in the editor color */
+:root[data-git-skin="intellij"] {
+  --gc-area-bg: var(--g-editor);
+  --gc-msg-bg: transparent;
+  --gc-msg-border: transparent;
+  --gc-msg-radius: 0;
+  --gc-msg-size: 13px;
+  --gc-area-pad: 0;
+  --gc-buttons-pad: 0 var(--gc-pad) var(--gc-pad);
+  --gc-toolbar-gap: 6px;
+}
+
+.gc-root { min-width: 0; overflow: hidden; }
+
+/* ---- toolbar: Refresh, Rollback, View Options, Expand All, Collapse All */
+.gc-toolbar { gap: var(--gc-toolbar-gap); padding: 0 8px; }
+.gc-view { position: relative; }
+.gc-view::after {                               /* the small corner triangle of an icon that opens a menu */
+  content: ""; position: absolute; right: 3px; bottom: 4px; width: 0; height: 0;
+  border-left: 4px solid transparent; border-bottom: 4px solid var(--g-icon);
+}
+
+/* ---- the tree */
+.gc-tree { flex: 1 1 0; min-height: 56px; }
+.gc-tree .g-row { gap: 6px; }
+.gc-tree .g-row-label { flex: 0 1 auto; }
+.gc-tree .g-row-dim { text-overflow: clip; flex-shrink: 1000000; }      /* the path gives way first, cut without "…"; so large that the name loses no sub-pixel */
+.gc-tree .g-row.k-group .g-row-dim, .gc-tree .g-row.k-dir .g-row-dim { flex-shrink: 0; }     /* a count stays whole; the name gives way */
+.gc-lines { margin-left: 10px; }                                         /* the Changes row: "5 files  +120 −34" */
+.gc-lines-add { color: var(--g-added); }
+.gc-lines-del { color: var(--g-error); }
+.gc-rb-tree .g-row-dim { text-overflow: clip; flex-shrink: 1000000; }
+.gc-tree .g-row.k-none { padding-left: 12px !important; }
+.gc-tree .g-row.k-none .g-row-chev { display: none; }
+.gc-tree .gc-resolve { color: var(--g-link); text-decoration: underline; font-weight: 600; }
+.gc-merge { width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--g-radius); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; visibility: hidden; }
+.g-row:hover .gc-merge, .g-row.sel .gc-merge, .gc-merge:focus-visible { visibility: visible; }
+.gc-merge:hover { background: var(--g-press); }
+
+/* ---- Amend row, message, buttons */
+.gc-bottom { flex: none; height: 232px; min-height: 0; max-height: calc(100% - 96px); display: flex; flex-direction: column; }
+.gc-amend { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 36px; padding: 0 var(--gc-pad); min-width: 0; }
+.gc-amend .gc-amend-link { display: inline-flex; align-items: center; gap: 1px; white-space: nowrap; flex: none; margin-left: -1px; color: var(--g-link); }
+.gc-amend .gc-amend-link:disabled { color: var(--g-disabled); cursor: default; text-decoration: none; }
+.gc-legend { margin-left: auto; display: flex; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; line-height: 22px; }   /* drops to its own line when the row is too narrow */
+.gc-legend > span { flex: none; }
+.gc-area { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: var(--gc-area-pad); background: var(--gc-area-bg); }
+.gc-msg.g-field { flex: 1 1 0; min-height: 44px; padding: 7px 9px; background: var(--gc-msg-bg); border-color: var(--gc-msg-border); border-radius: var(--gc-msg-radius); }
+.gc-msg .g-input { height: 100%; font-size: var(--gc-msg-size); line-height: 1.5; }
+.gc-error { flex: none; display: flex; align-items: flex-start; gap: 6px; padding: var(--gc-buttons-pad); padding-bottom: 0; color: var(--g-error); line-height: 16px; }
+.gc-buttons { flex: none; display: flex; gap: 8px; min-width: 0; padding: var(--gc-buttons-pad); }
+.gc-buttons .g-btn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.gc-buttons .g-btn.primary { flex-shrink: 0; }
+:root[data-git-skin="intellij"] .gc-msg.g-field:focus-within { box-shadow: inset 0 0 0 2px var(--g-focus); }
+
+/* ---- Commit Message History */
+.gc-history-pop { padding: 5px; }
+.gc-history-title { padding: 5px 9px 6px; color: var(--g-muted); font-size: 12px; }
+.gc-history { display: flex; flex-direction: column; overflow: auto; min-height: 0; }
+.gc-history-item {
+  flex: none; height: 28px; padding: 0 9px; border: 0; border-radius: var(--g-radius); background: transparent; text-align: left; cursor: default;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.gc-history-item:hover, .gc-history-item:focus-visible { background: var(--g-hover); outline: none; }
+
+/* ---- Rollback Changes */
+.gc-rb .g-dialog-body { gap: 12px; }
+.gc-rb-tree { flex: 1 1 auto; min-height: 150px; max-height: 320px; border: 1px solid var(--g-line-strong); border-radius: var(--g-radius); background: var(--g-editor); }
+.gc-rb-legend { display: flex; gap: 8px; min-height: 16px; font-size: 12px; }
+
+/* ---- commit checks that ask first (the detached HEAD warning with "Commit Anyway") */
+.gc-checks { flex: none; padding: var(--gc-buttons-pad); padding-bottom: 0; }
+.gc-check { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 6px; line-height: 16px; color: var(--g-text); }
+.gc-check .g-icon, .gc-check svg { flex: none; }
+.gc-check-text { flex: 1 1 160px; min-width: 0; }
+/* ---- the tool window title ("Commit" / "Files"): the default skin writes it in capitals, IntelliJ's in bold */
+:root:not([data-git-skin="intellij"]) .wb-rtitle { text-transform: uppercase; }
+:root[data-git-skin="intellij"] .wb-rtitle { font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--g-text); }
+.wb-rhead .gc-head-tools { margin-left: auto; display: flex; gap: 2px; }
+/* balloons stay in the editor area, left of the right column (commit.js sets --gc-right-edge) */
+body:has(.wb-right:not([hidden])) .g-balloons { right: calc(var(--gc-right-edge, 0px) + 16px); max-width: calc(100% - var(--gc-right-edge, 0px) - 32px); }
+/* Show Current Revision */
+.gc-revision { padding: 10px 12px; max-width: 460px; }
+.gc-revision-card { display: flex; flex-direction: column; gap: 3px; }
+.gc-revision-card .g-mono { font-size: 12px; }
+/* the files of the commit Amend changes */
+.gc-tree .g-row.k-group[data-id="amend"] .g-row-label { font-weight: 600; }
+/* dragging files between Changes and Unversioned Files (commit-drag.js): the node that takes the drop, the label at
+   the pointer; while no node would take it the cursor says so */
+.gc-drop-area { position: fixed; z-index: 2000; pointer-events: none; box-sizing: border-box; background: var(--g-dnd-row);
+  border: 1px solid var(--g-dnd-border); border-radius: 2px; }
+.gc-drag-label { position: fixed; z-index: 2001; pointer-events: none; display: flex; align-items: center; gap: 6px; max-width: 240px;
+  padding: 2px 8px 2px 6px; border-radius: var(--g-radius); background: var(--g-raised); border: 1px solid var(--g-line-strong);
+  color: var(--g-text); font: var(--g-size)/20px var(--g-font); white-space: nowrap; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); opacity: .92; }
+.gc-drag-label > span { overflow: hidden; text-overflow: ellipsis; }
+body.gc-dragging, body.gc-dragging * { cursor: default !important; user-select: none !important; -webkit-user-select: none !important; }
+body.gc-dragging.gc-no-drop, body.gc-dragging.gc-no-drop * { cursor: not-allowed !important; }
+
+/* ---- the Stash tab (stash-view.js; IntelliJ's SavedPatchesUi): stashes on top, the selected one's files below,
+   Apply / Pop under them. The header's Commit | Stash tabs reuse the tool window tab (.g-tab). */
+.wb-rhead-tabs { display: flex; align-items: center; flex: none; }
+.wb-rhead-tabs[hidden] { display: none; }
+.gs-tabs { margin-left: -6px; }
+.gs-tabs .g-tab { flex: none; }
+#g-stash { flex: 1 1 0; min-height: 0; }                       /* shares the right column with #g-commit */
+.gs-root { min-width: 0; min-height: 0; overflow: hidden; }
+.gs-top { flex: 1 1 0; min-height: 60px; display: flex; flex-direction: column; min-width: 0; }
+.gs-list-tree { flex: 1 1 0; min-height: 0; }
+.gs-list-tree .g-row { gap: 6px; }
+.gs-list-tree .g-row-label { flex: 0 1 auto; min-width: 48px; }
+.gs-list-tree .g-row-dim { flex: none; }
+/* the date stays whole; the message and the branch label share what is left (ellipsized) */
+.gs-branch { margin-left: auto; padding-left: 8px; display: inline-flex; align-items: center; gap: 2px; min-width: 28px; flex: 0 1 auto;
+  color: var(--gl-ref-fg, var(--g-muted)); font-size: calc(var(--g-size) - 1px); }
+.gs-branch-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-branch .gl-tag { flex: none; }
+.gs-list-tree[hidden] { display: none; }
+.gs-empty { flex: none; margin: 32px auto 0; padding: 18px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--g-muted); text-align: center; }
+.gs-empty[hidden] { display: none; }
+.gs-help-link { display: inline-flex; align-items: center; gap: 4px; color: var(--g-link); }
+.gs-shared { flex: none; padding: 4px 10px 6px; color: var(--g-muted); font-size: calc(var(--g-size) - 1px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-shared[hidden] { display: none; }
+.gs-bottom { flex: none; min-height: 0; max-height: calc(100% - 70px); display: flex; flex-direction: column; border-top: 1px solid var(--g-line); }
+.gs-bottom[hidden], .g-split[hidden] { display: none; }
+.gs-toolbar { gap: var(--gc-toolbar-gap); padding: 0 8px; }
+.gs-toolbar #gs-view { position: relative; }
+.gs-toolbar #gs-view::after { content: ""; position: absolute; right: 3px; bottom: 4px; width: 0; height: 0;
+  border-left: 4px solid transparent; border-bottom: 4px solid var(--g-icon); }
+.gs-files-wrap { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.gs-files { flex: 1 1 0; min-height: 0; }
+.gs-files .g-row { gap: 6px; }
+.gs-files .g-row-label { flex: 0 1 auto; }
+.gs-files .g-row-dim { text-overflow: clip; flex-shrink: 1000000; }
+.gs-files .g-row.k-group .g-row-dim, .gs-files .g-row.k-dir .g-row-dim { flex-shrink: 0; }
+.gs-files-empty { position: absolute; inset: 24px 12px auto; text-align: center; color: var(--g-muted); pointer-events: none; }
+.gs-files-empty[hidden] { display: none; }
+.gs-strip { flex: none; display: flex; align-items: center; gap: 8px; padding: 9px var(--gc-pad); border-top: 1px solid var(--g-line); min-width: 0; }
+.gs-tip { display: inline-flex; color: var(--g-icon); cursor: help; }
+/* the stash dialogs (stash-dialogs.js) */
+.gs-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--g-text); }
+.gs-message.g-field { padding: 6px 8px; }
+.gs-message .g-input { min-height: 60px; resize: vertical; }
+.gs-checks { gap: 6px; }
+.gs-stashes { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.gs-list { height: 150px; overflow: auto; border: 1px solid var(--g-line-strong); border-radius: var(--g-radius); background: var(--g-editor); outline: none; }
+.gs-list:focus-visible { box-shadow: 0 0 0 2px var(--g-focus); }
+.gs-list-row { padding: 0 8px; height: 24px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+.gs-list-row.sel { background: var(--g-select); }
+.gs-ref { font-family: var(--g-mono); font-weight: 600; }
+.gs-side { display: flex; flex-direction: column; gap: 6px; }
+.gs-paths-list { max-height: 360px; overflow: auto; display: flex; flex-direction: column; gap: 2px; }
+.gs-path { display: flex; align-items: center; gap: 6px; height: 22px; white-space: nowrap; }
+.gs-path-group { margin-top: 6px; color: var(--g-muted); }

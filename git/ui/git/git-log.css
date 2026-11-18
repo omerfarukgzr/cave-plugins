@@ -1,0 +1,237 @@
+/* Git prototype: the Log tab of the Git tool window (log.js, log-branches.js, log-details.js).
+   Layout and measures follow IntelliJ's Log (26 px rows, 36 px toolbars, 38 px vertical toolbar); colors come from git.css. */
+
+:root {
+  --gl-ref-fg: var(--g-muted);      /* text of a ref label in the table (VersionControl.Log.Commit.Reference.foreground) */
+  --gl-merge-fg: var(--g-muted);    /* a merge commit's row (VersionControl.Log.Commit.unmatchedForeground) */
+}
+:root[data-git-skin="intellij"] {
+  --gl-ref-fg: var(--g-disabled);
+  --gl-merge-fg: var(--g-disabled);
+}
+
+/* ---------------------------------------------------------------- panes */
+.gl-root { display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+.gl-root [hidden] { display: none !important; }
+.gl-bpane { display: flex; flex: none; width: 231px; min-width: 0; min-height: 0; }
+.gl-commits { flex: 1 1 0; min-width: 0; min-height: 0; }
+.gl-right { flex: none; width: 254px; min-width: 0; min-height: 0; }
+.gl-files { flex: none; height: 45%; min-height: 0; }
+
+/* ---------------------------------------------------------------- Branches pane */
+.gl-bbar { height: 100%; overflow: hidden; border-right: 1px solid var(--g-line); }
+.gl-bcol { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.gl-bsearch { flex: none; height: var(--g-toolbar); display: flex; align-items: center; padding: 0 6px; }
+.gl-bsearch .g-field { flex: 1; }
+.gl-btree { flex: 1 1 0; }
+.gl-btree .g-row-label:has(+ .g-row-dim), .gl-ftree .g-row-label:has(+ .g-row-dim) { flex-shrink: 0; }   /* counters and paths give way before the name does */
+.gl-ftree .k-parent .g-row-label { flex-shrink: 1; }
+.gl-sync { display: inline-flex; align-items: center; gap: 6px; margin-left: 3px; font-size: 12px; }
+.gl-sync span { display: inline-flex; align-items: center; gap: 1px; }
+.gl-sync .in { color: var(--g-incoming); }
+.gl-sync .out { color: var(--g-outgoing); }
+.gl-bstrip {
+  flex: none; width: 34px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 5px 0;
+  border-right: 1px solid var(--g-line);
+}
+.gl-bstrip-label {
+  writing-mode: vertical-rl; transform: rotate(180deg); padding: 6px 4px; border: 0; border-radius: var(--g-radius);
+  background: transparent; cursor: pointer; white-space: nowrap;
+}
+.gl-bstrip-label:hover { background: var(--g-hover); }
+
+/* ---------------------------------------------------------------- Commits toolbar */
+.gl-cbar { gap: 6px; padding: 0 6px; }
+.gl-cbar-left { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: center; gap: 2px; overflow: hidden; }
+.gl-cbar-right { flex: none; display: flex; align-items: center; gap: 0; }
+.gl-search { flex: none; width: 180px; margin-right: 4px; padding-right: 4px; gap: 5px; }
+.gl-search.bad { border-color: var(--g-error); }
+.gl-cbar-left.tight .gl-search { flex: 1 1 0; width: auto; min-width: 0; }
+.gl-field-tools { display: inline-flex; align-items: center; flex: none; }
+.gl-field-btn {
+  width: 19px; height: 20px; padding: 0; flex: none; border: 0; border-radius: 5px; background: transparent; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.gl-field-btn:hover { background: var(--g-hover); }
+.gl-field-btn.on { background: var(--g-accent-soft); box-shadow: inset 0 0 0 1px var(--g-accent-line); }
+.gl-filter { display: inline-flex; align-items: center; flex: none; min-width: 0; }
+.gl-filter-btn {
+  display: inline-flex; align-items: center; gap: 3px; height: 26px; max-width: 250px; padding: 0 5px 0 8px; border: 0;
+  border-radius: var(--g-radius); background: transparent; color: var(--g-dim); white-space: nowrap; cursor: pointer;
+}
+.gl-filter-btn:hover { background: var(--g-hover); }
+.gl-filter-btn .g-ic { opacity: .75; }
+.gl-filter.set .gl-filter-btn { padding-right: 3px; }
+.gl-filter-value { color: var(--g-text); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.gl-filter-x {
+  width: 18px; height: 18px; padding: 0; margin-right: 4px; flex: none; border: 0; border-radius: 5px; background: transparent; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; opacity: .75;
+}
+.gl-filter-x:hover { background: var(--g-hover); opacity: 1; }
+
+/* ---------------------------------------------------------------- commit table */
+.gl-table { flex: 1 1 0; min-height: 0; overflow: auto; outline: none; user-select: none; -webkit-user-select: none; }
+.gl-row {
+  position: relative; display: flex; align-items: stretch; height: var(--g-log-row); padding: 0 9px 0 8px;
+  white-space: nowrap; cursor: default; --g-row-bg: var(--gl-solid, var(--g-panel));
+}
+.gl-row::before { content: ""; position: absolute; inset: 0 4px; border-radius: var(--g-radius); pointer-events: none; }
+.gl-row > * { position: relative; }
+.gl-row.cur { background: var(--g-current-branch-row); --g-row-bg: var(--gl-solid-cur, var(--g-panel)); }
+.gl-row:hover::before { background: var(--g-hover); }
+.gl-row:hover { --g-row-bg: var(--gl-solid-hover, var(--g-panel)); }
+.gl-row.cur:hover { --g-row-bg: var(--gl-solid-cur-hover, var(--g-panel)); }
+.gl-row.sel { background: none; --g-row-bg: var(--gl-solid-idle, var(--g-panel)); }
+.gl-row.sel::before { background: var(--g-select-idle); }
+.gl-table:focus .gl-row.sel, .gl-table.focused .gl-row.sel { --g-row-bg: var(--gl-solid-sel, var(--g-panel)); }
+.gl-table:focus .gl-row.sel::before, .gl-table.focused .gl-row.sel::before { background: var(--g-select); }
+.gl-row.merge:not(.sel) { color: var(--gl-merge-fg); }
+.gl-subject { flex: 1 0 150px; min-width: 0; display: flex; align-items: center; overflow: hidden; }
+.gl-subject .g-graph { flex: none; display: block; }
+.g-graph-stub { cursor: pointer; }
+.gl-text { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.gl-text.clip { text-overflow: clip; }
+.gl-row .bold { font-weight: 600; }
+.gl-col { flex: 0 1 auto; min-width: 0; padding: 0 5px; overflow: hidden; text-overflow: ellipsis; line-height: var(--g-log-row); }
+.gl-author { width: var(--gl-w-author); }
+.gl-date { width: var(--gl-w-date); }
+.gl-hash { width: var(--gl-w-hash); }
+.gl-refs {
+  flex: none; height: 100%; display: inline-flex; align-items: center; padding: 0 4px; overflow: hidden;
+  color: var(--gl-ref-fg); font-size: calc(var(--g-size) - 1px);
+}
+.gl-ref { flex: none; display: inline-flex; align-items: center; overflow: hidden; }
+.gl-ref-text { margin-left: 1px; }
+.gl-ref.warn { color: var(--g-warn); }
+.gl-ref.warn .gl-ref-text { margin-left: 4px; }
+.gl-tag { flex: none; display: block; overflow: visible; }
+.gl-empty { padding: 28px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--g-dim); }
+/* ---------------------------------------------------------------- narrow and medium arrangements (log-layout.js)
+   Both: the commits on top, a bottom pane under them (its height: --gl-bottom, set from the splitter or the default
+   share), the branches pane as a drawer. Medium: Changed Files at the left of Commit Details (--gl-files-w). Narrow:
+   Commit Details over Changed Files, a compact date in the rows. The wide arrangement's inline sizes are overridden,
+   not changed, so they come back as they were. */
+.gl-root.narrow, .gl-root.medium { flex-direction: column; position: relative; }
+.gl-root.narrow > .gl-bstrip, .gl-root.medium > .gl-bstrip,
+.gl-root.narrow > .g-split:not(.gl-hsplit), .gl-root.medium > .g-split:not(.gl-hsplit) { display: none !important; }
+.gl-root:not(.medium) > .gl-hsplit-medium, .gl-root:not(.narrow) > .gl-hsplit-narrow { display: none; }
+.gl-root.narrow > .gl-commits, .gl-root.medium > .gl-commits { flex: 1 1 0; min-height: 150px; }
+.gl-root.narrow > .gl-right, .gl-root.medium > .gl-right { width: auto !important; flex: none !important; height: var(--gl-bottom, 40%); min-height: 110px; }
+.gl-root:not(.medium) .gl-fsplit, .gl-root:not(.narrow) .gl-dsplit { display: none; }
+.gl-root.narrow .gl-right > .g-split:not(.gl-dsplit), .gl-root.medium .gl-right > .g-split:not(.gl-fsplit) { display: none; }
+.gl-root.medium > .gl-right { flex-direction: row; }
+.gl-root.medium .gl-right > .gl-files { flex: none !important; width: var(--gl-files-w, 44%); height: auto !important; }
+.gl-root.medium .gl-right > .gl-details { flex: 1 1 0; }
+.gl-root.medium .gl-right.no-details > .gl-files { flex: 1 1 auto !important; width: auto; }
+.gl-root.medium .gl-right.no-details > .gl-fsplit { display: none; }
+/* narrow: details (order -2), the line under them (the splitter, -1), the files; dragged once (.gl-dsized), the
+   details keep that height (--gl-details-h) */
+.gl-root.narrow .gl-right > .gl-details { order: -2; flex: 0 1 auto; max-height: var(--gl-details-max, 58%); }
+.gl-root.narrow .gl-right > .gl-dsplit { order: -1; }
+.gl-root.narrow.gl-dsized .gl-right > .gl-details { flex: none; height: var(--gl-details-h); max-height: none; }
+/* narrow, the bottom pane sized to its content (log-layout.js): the details show whole */
+.gl-root.narrow.gl-fit:not(.gl-dsized) .gl-right > .gl-details { flex: none; max-height: none; }
+/* narrow, details only a little over their 58 %: shown whole, without a scrollbar (log-layout.js --gl-details-max) */
+.gl-root.narrow.gl-dwhole:not(.gl-dsized) .gl-right > .gl-details { overflow-y: hidden; }
+.gl-root.narrow .gl-right > .gl-files { flex: 1 1 0 !important; height: auto !important; min-height: 0; }
+.gl-root.narrow .gl-right.no-details > .gl-dsplit { display: none; }
+/* never laid out yet (log-layout.js): nothing is painted, so no guessed arrangement shows */
+.gl-root.gl-unsized { visibility: hidden; }
+/* a diff preview at the right goes under the bottom pane while the panes are stacked */
+.gl-root.narrow > .gl-preview.right, .gl-root.medium > .gl-preview.right { width: auto !important; flex: 0 0 30% !important; min-height: 0; }
+/* narrow: the compact date at the right end of a row */
+.gl-when { font-size: 12px; color: var(--g-muted); font-variant-numeric: tabular-nums; text-align: right; text-overflow: clip; }
+.gl-row.sel .gl-when { color: var(--g-dim); }
+/* narrow: the ref labels give way (clipped) before the subject drops under 72 px; the compact date needs its room */
+.gl-root.narrow .gl-subject > .gl-text { min-width: 72px; }
+.gl-root.narrow .gl-subject > .gl-refs { flex: 0 1 auto; min-width: 22px; }
+/* narrow: who and when right under the subject, then the refs, the body, the containing branches (CSS order: the DOM
+   keeps IntelliJ's order) */
+.gl-root.narrow .gl-dblock { display: flex; flex-direction: column; }
+.gl-root.narrow .gl-dblock > * { flex: none; }   /* the details pane scrolls; its parts never shrink to fit */
+.gl-root.narrow .gl-dwho { order: 1; margin-top: 4px; }
+.gl-root.narrow .gl-drefs { order: 2; margin-top: 6px; }
+.gl-root.narrow .gl-dbody { order: 3; margin-top: 8px; }
+.gl-root.narrow .gl-dcontaining { order: 4; margin-top: 4px; }
+/* the Branches drawer */
+.gl-bopen.icon-only { padding: 0 5px; }
+.gl-bopen.icon-only > span:not(.g-ic) { display: none; }
+.gl-root.narrow > .gl-bpane, .gl-root.medium > .gl-bpane {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 6; width: min(300px, 86%) !important; flex: none !important;
+  background: var(--g-panel); border-right: 1px solid var(--g-line-strong); box-shadow: var(--g-shadow);
+  transform: translateX(-104%); visibility: hidden; transition: transform .16s ease, visibility 0s linear .16s;
+}
+.gl-root.drawer > .gl-bpane { transform: none; visibility: visible; transition: transform .16s ease; }
+.gl-scrim { position: absolute; inset: 0; z-index: 5; background: var(--g-scrim); }
+@media (prefers-reduced-motion: reduce) {
+  .gl-root > .gl-bpane { transition: none !important; }
+}
+/* "Loading commits…" under the table while the list pages in (vcs.log.loading.status) */
+.gl-status { flex: none; height: 22px; padding: 0 10px; display: flex; align-items: center; font-size: 12px; color: var(--g-dim); border-top: 1px solid var(--g-line); }
+.gl-status.cap { color: var(--g-warn); }
+
+/* ---------------------------------------------------------------- popups of the toolbar */
+.gl-ask-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; min-height: 0; }
+.gl-ask-label { font-weight: 600; }
+.gl-suggest { display: flex; flex-direction: column; overflow: auto; min-height: 0; margin: 0 -4px -4px; }
+.gl-suggest-item {
+  flex: none; height: 26px; padding: 0 8px; border: 0; border-radius: var(--g-radius); background: transparent; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
+}
+.gl-suggest-item:hover { background: var(--g-hover); }
+.gl-suggest-item.on { background: var(--g-select); }
+.gl-suggest-item b { color: var(--g-link); font-weight: inherit; }
+.gl-period { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.gl-period input { color-scheme: dark; }
+.gl-period input.empty { color: var(--g-muted); }
+.gl-paths-tree { flex: 1 1 0; min-height: 220px; border: 1px solid var(--g-line-strong); border-radius: var(--g-field-radius); background: var(--g-editor); }
+
+/* ---------------------------------------------------------------- Changed Files */
+.gl-ftree { flex: 1 1 0; }
+.gl-ftree .g-tree-empty { height: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.gl-fnote { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px; text-align: center; color: var(--g-dim); }
+
+/* ---------------------------------------------------------------- Commit Details */
+.gl-details { flex: 1 1 0; padding: 12px 14px; line-height: 1.45; outline: none; user-select: text; -webkit-user-select: text; }
+.gl-dblock + .gl-dblock { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--g-line); }
+.gl-dsubject { font-family: var(--g-mono); font-size: var(--g-size); font-weight: 700; white-space: pre-wrap; overflow-wrap: anywhere; }
+.gl-dbody { margin-top: 8px; font-family: var(--g-mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.gl-dwho { margin-top: 16px; overflow-wrap: anywhere; }
+.gl-dcommitted { color: var(--g-muted); }
+.gl-drefs { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+.gl-dref { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.gl-dref span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gl-din { margin-top: 4px; display: flex; align-items: baseline; gap: 6px; min-width: 0; white-space: nowrap; }
+.gl-din-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.gl-din .g-link { flex: none; }
+.gl-din-list { padding-left: 14px; }
+.gl-din-wait:not(.late) { visibility: hidden; }   /* the line keeps its place; its text shows after 400 ms (log-details.js) */
+.gl-dempty { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--g-dim); user-select: none; -webkit-user-select: none; }
+.gl-dmore { margin-top: 12px; color: var(--g-dim); }
+
+/* ---------------------------------------------------------------- dialogs */
+.gl-reset-what { overflow-wrap: anywhere; }
+.gl-reset-desc { color: var(--g-dim); white-space: pre-line; line-height: 1.45; }
+.gl-reset-modes { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: start; margin-top: 4px; }
+.gl-reset-hint { color: var(--g-dim); white-space: pre-line; line-height: 1.3; }
+.gl-reword .g-field { flex: 1 1 auto; }
+.gl-reword textarea { min-height: 150px; line-height: 1.5; }
+.gla-squash textarea, .gla-fixup textarea { line-height: 1.5; }
+.gla-files, .gla-commits { max-height: 180px; overflow: auto; border: 1px solid var(--g-line); border-radius: 4px; padding: 4px 6px; }
+.gla-file { padding: 2px 0; }
+.gla-commit { padding: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gla-hash { font-family: var(--g-mono); font-size: calc(var(--g-size) - 1px); color: var(--g-dim); }
+.gla-target { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.gla-remote { min-width: 200px; }
+
+/* ---------------------------------------------------------------- Graph Options, View Options, Show Diff Preview */
+.gl-outer { display: flex; flex-direction: column; }
+.gl-preview { display: flex; min-width: 0; min-height: 0; flex: none; }
+.gl-preview.bottom { height: 38%; }
+.gl-preview.right { width: 34%; }
+.gl-preview > .glt-preview { flex: 1 1 0; }
+.gl-right.no-details > .gl-files { flex: 1 1 auto; height: auto !important; }
+.gl-subject.labels-left .gl-refs { padding: 0 6px 0 0; }
+.gl-history-btn { margin-left: -2px; }
+.gl-ask-many textarea { resize: none; }
+.gl-ask-ad { color: var(--g-dim); font-size: calc(var(--g-size) - 1px); }

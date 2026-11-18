@@ -1,0 +1,100 @@
+/* The read-only file view with its change markers and the blame column (fileview.js, annotate.js), and the
+   Files tool window (filetree.js). The code uses the diff tab's editor tokens (git-diff.css: --gd-*).
+   Change markers: ADDED/MODIFIED/DELETED_LINES_COLOR; annotations: VCS_ANNOTATIONS_COLOR_1..5, ANNOTATIONS_COLOR,
+   ANNOTATIONS_LAST_COMMIT_COLOR (D-kaynak.md §5.2, the dark scheme). */
+
+:root {
+  --fv-mark-add: #549159;
+  --fv-mark-mod: #375fad;
+  --fv-mark-del: #868a91;
+  --fv-ann-1: #2f5194;
+  --fv-ann-2: #2d416b;
+  --fv-ann-3: #283754;
+  --fv-ann-4: #242d42;
+  --fv-ann-5: #22252e;
+  --fv-ann-text: #8d9199;
+  --fv-ann-last: #ced0d6;
+  --fv-cur-row: rgba(255, 255, 255, .05);
+}
+:root[data-git-skin="intellij"] { --fv-cur-row: #26282e; }   /* CARET_ROW_COLOR */
+
+/* ---------------------------------------------------------------- the file view */
+.fv-root { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--gd-bg); color: var(--gd-text); --fv-line: var(--gd-line); outline: none; }
+.fv-body { flex: 1 1 0; min-height: 0; display: flex; }
+.fv-scroll { flex: 1 1 0; min-width: 0; overflow: auto; outline: none; font-family: var(--gd-font); font-size: var(--gd-size); }
+.fv-scroll .g-vlist-win { right: auto; min-width: 100%; }
+.fv-row { display: flex; height: var(--fv-line); line-height: var(--fv-line); width: max-content; min-width: 100%; }
+.fv-row.cur { background: var(--fv-cur-row); }
+.fv-gutter { position: sticky; left: 0; z-index: 1; flex: none; display: flex; background: var(--gd-bg); }
+.fv-row.cur .fv-gutter { background: color-mix(in srgb, var(--fv-cur-row), var(--gd-bg)); }
+.fv-num { width: calc(var(--fv-digits, 3) * 1ch + 18px); padding-right: 6px; text-align: right; color: var(--gd-num); user-select: none; }
+.fv-row.cur .fv-num { color: var(--gd-num-cur); }
+.fv-mark { position: relative; width: 12px; flex: none; }
+.fv-mark.add::before, .fv-mark.mod::before { content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 3px; border-radius: 2px; }
+.fv-mark.add::before { background: var(--fv-mark-add); }
+.fv-mark.mod::before { background: var(--fv-mark-mod); }
+.fv-mark.del::after {                       /* deleted lines: a small triangle on the line between rows */
+  content: ""; position: absolute; left: 2px; top: -4px; width: 0; height: 0;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid var(--fv-mark-del);
+}
+.fv-mark.del.below::after { top: auto; bottom: -4px; }
+.fv-mark.add, .fv-mark.mod, .fv-mark.del { cursor: pointer; }
+/* the change marker popup (fileview-marker.js): the toolbar, then the lines as they were (A §6.2) */
+.fv-marker-pop { padding: 0; overflow: hidden; max-width: min(760px, calc(100vw - 32px)); }
+.fv-pop-bar { gap: 2px; padding: 3px 6px; border-bottom: 1px solid var(--g-line); }
+.fv-pop-old { max-height: 240px; overflow: auto; padding: 4px 0; background: var(--gd-bg); font-family: var(--gd-font); font-size: var(--gd-size); line-height: var(--gd-line); color: var(--gd-text); }
+.fv-pop-line { white-space: pre; padding: 0 10px; min-height: var(--gd-line); }
+.fv-pop-line .gd-w { display: inline; height: auto; }
+.fv-code { white-space: pre; tab-size: 4; padding: 0 16px 0 4px; }
+.fv-msg { padding: 24px; color: var(--g-dim); text-align: center; font-family: var(--g-font); }
+
+/* the blame column */
+.fv-blame { flex: none; width: var(--fv-blame, 0); padding: 0 6px; overflow: hidden; white-space: pre; color: var(--fv-ann-text); cursor: pointer; user-select: none; }
+.fv-blame.c0 { background: var(--fv-ann-1); }
+.fv-blame.c1 { background: var(--fv-ann-2); }
+.fv-blame.c2 { background: var(--fv-ann-3); }
+.fv-blame.c3 { background: var(--fv-ann-4); }
+.fv-blame.c4 { background: var(--fv-ann-5); }
+.fv-blame.last { color: var(--fv-ann-last); font-weight: bold; }     /* the file's current revision: bold + "*" (B §16.2) */
+.fv-num + .fv-blame { margin-left: 4px; }
+.fv-blame.none { cursor: default; background: transparent; }
+.fv-blame.same { color: var(--g-text); box-shadow: inset 2px 0 0 var(--g-accent); }
+.fv-tip {
+  position: fixed; z-index: 60; max-width: 460px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
+  background: var(--g-panel); border: 1px solid var(--g-line-strong); border-radius: var(--g-radius-popup); box-shadow: var(--g-shadow);
+}
+.fv-tip-msg { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; }
+.fv-tip .g-mono { font-size: 12px; }
+/* inline blame of the caret line (annotate-inline.js): after the text, faded (GitToolBox draws it in the editor's
+   inlay hint style, gray italic) */
+.fv-inline { margin-left: 4ch; color: var(--fv-ann-text); opacity: .75; font-style: italic; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.fv-inline:hover { opacity: 1; text-decoration: underline; }
+
+/* the code tokens (highlight.js classes; colors from git-diff.css) */
+.fv-code .hljs-keyword, .fv-code .hljs-literal, .fv-code .hljs-built_in, .fv-code .hljs-selector-pseudo { color: var(--gd-tok-keyword); }
+.fv-code .hljs-string, .fv-code .hljs-regexp, .fv-code .hljs-char, .fv-code .hljs-symbol { color: var(--gd-tok-string); }
+.fv-code .hljs-number { color: var(--gd-tok-number); }
+.fv-code .hljs-comment, .fv-code .hljs-quote { color: var(--gd-tok-comment); }
+.fv-code .hljs-doctag { color: var(--gd-tok-doc); }
+.fv-code .hljs-title, .fv-code .hljs-title.function_ { color: var(--gd-tok-function); }
+.fv-code .hljs-type, .fv-code .hljs-title.class_ { color: var(--gd-tok-type); }
+.fv-code .hljs-variable, .fv-code .hljs-property, .fv-code .hljs-template-variable { color: var(--gd-tok-variable); }
+.fv-code .hljs-meta, .fv-code .hljs-meta .hljs-keyword { color: var(--gd-tok-meta); }
+.fv-code .hljs-tag, .fv-code .hljs-name { color: var(--gd-tok-tag); }
+.fv-code .hljs-attr, .fv-code .hljs-attribute { color: var(--gd-tok-attr); }
+.fv-code .hljs-selector-class, .fv-code .hljs-selector-id, .fv-code .hljs-selector-tag, .fv-code .hljs-selector-attr { color: var(--gd-tok-selector); }
+.fv-code .hljs-section { color: var(--gd-tok-heading); font-style: var(--gd-tok-heading-style); }
+.fv-code .hljs-code, .fv-code .hljs-bullet, .fv-code .hljs-link { color: var(--gd-tok-code); }
+.fv-code .hljs-strong { font-weight: 700; }
+.fv-code .hljs-emphasis { font-style: italic; }
+
+/* ---------------------------------------------------------------- the Files tool window */
+#g-files { flex: 1 1 0; min-height: 0; }                       /* shares the right column with #g-commit */
+.gf-root { min-width: 0; overflow: hidden; }
+.gf-toolbar { gap: 3px; padding: 0 8px; }
+.gf-tree { flex: 1 1 0; min-height: 0; }
+.gf-tree .g-row { gap: 6px; }
+.gf-tree .g-row-label { flex: 0 1 auto; }
+.gf-tree .g-row-dim { flex-shrink: 1000000; text-overflow: clip; }
+.gf-notes:empty { display: none; }
+.gf-note { padding: 4px 12px; color: var(--g-warn); font-size: 12px; }

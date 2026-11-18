@@ -1,0 +1,179 @@
+/* Git prototype: the branch widget, the Branches popup with its submenus, and the branch / push / update dialogs.
+   Measures are IntelliJ's (popup 375 wide, rows 24 high, 12 px row inset, 19 px per tree level, submenu from 240 px);
+   colors, radii and type come from the skin tokens in git.css. */
+
+:root {
+  /* the two square buttons beside the widget while a merge / rebase / cherry-pick is paused (IntelliJ's own colors) */
+  --gb-op-go: #4a8359;
+  --gb-op-stop: #b7565b;
+  --gb-op-fg: #ffffff;
+  --gb-op-size: 28px;
+  --gb-op-radius: 7px;
+  --gb-widget-h: 28px;
+  --gb-popup-rule: rgba(255, 255, 255, .1);        /* separators inside the popup and its menus */
+  --gb-split-rule: rgba(30, 30, 29, .22);          /* the line between Push and its arrow */
+}
+:root[data-git-skin="intellij"] {
+  --gb-op-go: #4a8359;
+  --gb-op-stop: #b7565b;
+  --gb-op-fg: #ffffff;
+  --gb-op-size: 30px;
+  --gb-op-radius: 4px;
+  --gb-widget-h: 30px;
+  --gb-popup-rule: #43454a;
+  --gb-split-rule: #83acfc;
+}
+
+/* ---------------------------------------------------------------- widget (in the file panel's 40 px header) */
+.gb-w { gap: 4px; }
+.gb-widget {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; flex: 0 1 auto; height: var(--gb-widget-h); padding: 0 4px 0 7px;
+  border: 0; border-radius: var(--g-radius); background: transparent; color: var(--g-text); cursor: pointer; white-space: nowrap;
+}
+.gb-widget:hover, .gb-widget.open { background: var(--g-hover); }
+.gb-widget:active { background: var(--g-press); }
+.gb-widget-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.gb-sync { display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.gb-in, .gb-out { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; }
+.gb-in { color: var(--g-incoming); }
+.gb-out { color: var(--g-outgoing); }
+.gb-op {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--gb-op-size); height: var(--gb-op-size); padding: 0;
+  border: 0; border-radius: var(--gb-op-radius); cursor: pointer;
+}
+.gb-op.go { background: var(--gb-op-go); }
+.gb-op.stop { background: var(--gb-op-stop); }
+.gb-op:hover { filter: brightness(1.12); }
+.gb-op:active { filter: brightness(.92); }
+.gb-op svg [stroke]:not([stroke="none"]) { stroke: var(--gb-op-fg); }
+.gb-op svg [fill]:not([fill="none"]) { fill: var(--gb-op-fg); }
+
+/* ---------------------------------------------------------------- popup */
+.gb-popup { min-height: 300px; }
+.gb-grip { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; z-index: 1; }   /* the resizable border's corner */
+.gb-pop { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.gb-head { display: flex; align-items: center; flex: none; padding: 14px 8px 8px 12px; }   /* + the popup's 1 px border = IntelliJ's 15 / 9 / 13 */
+.gb-search { flex: 1 1 0; height: 30px; margin-right: 9px; }
+.gb-list { flex: 1 1 auto; padding-bottom: 12px; outline: none; user-select: none; -webkit-user-select: none; }
+.gb-row {
+  display: flex; align-items: center; height: var(--g-row); margin: 0 11px; padding: 0 1px 0 calc(10px + var(--gb-depth, 0) * 19px);
+  border-radius: var(--g-radius); white-space: nowrap; cursor: default; min-width: 0;
+}
+.gb-row.sel { background: var(--g-select); }
+.gb-row > .g-ic { margin-right: 6px; }
+.gb-folder > .g-ic { margin-right: 7px; }
+.gb-label { flex: 0 1 auto; min-width: 24px; overflow: hidden; text-overflow: ellipsis; }
+.gb-action > .gb-label, .gb-section > .gb-label, .gb-folder > .gb-label { flex: 1 1 auto; }
+.gb-key { flex: none; margin-left: 16px; padding-right: 7px; color: var(--g-muted); }
+.gb-chev { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; height: 16px; margin-right: 3px; transition: transform .1s; }
+.gb-section > .gb-chev { margin-right: 6px; }
+.gb-chev.open { transform: rotate(90deg); }
+.gb-fav {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; height: 16px; margin-right: 7px; padding: 0;
+  border: 0; border-radius: calc(var(--g-radius) / 2); background: transparent; cursor: pointer;
+}
+.gb-fav-own, .gb-fav-hover { display: inline-flex; }
+.gb-fav-hover { display: none; }
+.gb-row.sel .gb-fav.plain .gb-fav-own { display: none; }
+.gb-row.sel .gb-fav.plain .gb-fav-hover { display: inline-flex; }
+.gb-row .gb-sync { margin-left: 10px; }
+.gb-tracked { flex: 0 10 auto; min-width: 0; margin-left: auto; padding-left: 12px; overflow: hidden; text-overflow: ellipsis; text-align: right; color: var(--g-muted); }
+.gb-row.sel .gb-tracked { color: var(--g-dim); }
+.gb-more { display: inline-flex; flex: none; width: 16px; height: 16px; margin-left: 4px; }
+.gb-hit { border-radius: calc(var(--g-radius) / 3); background: var(--g-accent-soft); box-shadow: 0 0 0 1px var(--g-accent-line); }
+.gb-sep { height: 1px; margin: 12px 7px 11px; background: var(--gb-popup-rule); }
+.gb-empty { padding: 18px 22px; color: var(--g-dim); text-align: center; }
+
+/* ---------------------------------------------------------------- submenus */
+.gb-menu { padding: 7px; min-width: 238px; max-width: 460px; overflow: auto; }
+.gb-mi {
+  display: flex; align-items: center; width: 100%; height: var(--g-row); padding: 0 8px; border: 0; border-radius: var(--g-radius); background: transparent;
+  color: var(--g-text); text-align: left; white-space: nowrap; cursor: default;
+}
+.gb-mi.sel { background: var(--g-select); }
+.gb-mi:disabled { color: var(--g-disabled); }
+.gb-mi.danger:not(:disabled) { color: var(--g-error); }
+.gb-mlabel { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.gb-mkey { flex: none; margin-left: 20px; color: var(--g-muted); }
+.gb-marrow { display: inline-flex; flex: none; width: 16px; height: 16px; margin: 0 -6px 0 12px; }
+.gb-mcheck { display: inline-flex; flex: none; width: 16px; height: 16px; margin-right: 8px; }
+.gb-msep { height: 1px; margin: 4px 0; background: var(--gb-popup-rule); }
+
+/* ---------------------------------------------------------------- name dialogs (New Branch, Rename, New Tag, Checkout) */
+.gb-form { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 9px 8px; }
+.gb-form > .g-label { color: var(--g-text); white-space: nowrap; }
+.gb-options { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.gb-line { min-height: 18px; line-height: 1.4; }
+.gb-line > .g-dim { margin-top: 1px; }
+.gb-problem { color: var(--g-error); overflow-wrap: anywhere; }
+.g-field.gb-invalid { border-color: var(--g-error); }
+.gb-stack { display: flex; flex-direction: column; gap: 8px; }
+.gb-prompt { color: var(--g-text); }
+.gb-suggest-pop { z-index: 912; }
+.gb-suggest { max-height: 260px; }
+.gb-suggest .g-menu-item { cursor: pointer; }
+.gb-suggest .g-menu-item.sel { background: var(--g-select); }
+.gb-suggest-label { flex: none; }
+.gb-suggest-hint { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--g-muted); }
+
+/* ---------------------------------------------------------------- Push Commits */
+.gb-push .g-dialog-body { flex-direction: row; gap: 0; padding: 0; overflow: hidden; }
+.gb-push-left { flex: 0 0 50%; min-width: 0; }
+.gb-push-commits, .gb-push-files { padding: 6px 0; }
+.gb-push-commits .k-push-root > .g-row-chev { display: none; }
+.gb-push-commits .k-push-root { padding-left: 10px !important; }
+.gb-push-commits .k-push-commit { padding-left: 26px !important; }
+.gb-push-commits .k-push-commit > .g-row-chev { display: none; }
+.gb-push-target { display: inline-flex; align-items: center; gap: 5px; }
+.gb-push-arrow, .gb-push-colon { color: var(--g-dim); }
+.gb-badge { margin-left: 4px; padding: 0 5px; border-radius: calc(var(--g-radius) / 2); background: var(--g-raised); color: var(--g-dim); font-size: 11px; line-height: 16px; }
+.gb-push-right { min-width: 0; }
+.gb-push-bar { flex: none; border-bottom: 1px solid var(--g-line); }
+.gb-push-detail[hidden] { display: none; }
+.gb-push-banner .g-link { white-space: nowrap; }
+/* Push Rejected: the long "Remember the update method…" label wraps */
+.g-confirm-text .gb-options .g-check { align-items: flex-start; }
+.g-confirm-text .gb-options .g-check-label { white-space: normal; }
+/* Git ▸ New Tag… */
+.gb-tag-root { color: var(--g-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gb-tag-commit { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.gb-tag-commit .g-field { flex: 1 1 auto; min-width: 0; }
+.gb-form > .g-label[for="gb-tag-dlg-message"] { align-self: start; padding-top: 6px; }
+.gb-push-detail { flex: 0 0 38%; padding: 12px 14px; border-top: 1px solid var(--g-line); line-height: 1.5; }
+.gb-push-subject { font-family: var(--g-mono); font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.gb-push-body { margin-top: 6px; font-family: var(--g-mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.gb-push-meta { overflow-wrap: anywhere; }
+.gb-push-subject + .gb-push-meta, .gb-push-body + .gb-push-meta { margin-top: 12px; }
+.g-btn.gb-split-main { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.g-btn.gb-split-arrow {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; padding: 0; margin-left: -8px;
+  border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 1px solid var(--gb-split-rule);
+}
+.gb-split-arrow svg [stroke]:not([stroke="none"]) { stroke: var(--g-btn-primary-fg); }
+
+/* the target branch is a link that turns into a field (IntelliJ's push target panel) */
+.gb-push-branch { padding: 0; font: inherit; }
+.g-input.gb-push-edit { height: 22px; width: 180px; padding: 0 6px; }
+.gb-push-banner { margin: 8px 10px 0; padding: 6px 10px; border-radius: var(--g-radius); background: var(--g-accent-soft); line-height: 1.4; overflow-wrap: anywhere; }
+.gb-push-opts { display: flex; align-items: center; gap: 8px; }
+.g-input.gb-push-tags-mode { height: 26px; width: auto; padding: 0 6px; }
+.gb-push-tags-mode:disabled { color: var(--g-disabled); }
+
+/* ---------------------------------------------------------------- Update Project */
+.gb-radios { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 4px 0 6px; }
+
+/* ---------------------------------------------------------------- Git Checkout Problem, Branch Was Not Fully Merged */
+.gb-problem-dlg .g-dialog-body { gap: 10px; }
+.gb-problem-text { line-height: 1.45; }
+.gb-problem-text > div + div { margin-top: 4px; }
+.gb-problem-files { max-height: 220px; min-height: 48px; padding: 4px 0; border: 1px solid var(--g-line-strong); border-radius: var(--g-radius); background: var(--g-editor); }
+.gb-problem-file { display: flex; align-items: center; gap: 6px; height: var(--g-row); padding: 0 10px; white-space: nowrap; }
+.gb-problem-file > .g-dim { overflow: hidden; text-overflow: ellipsis; }
+.gb-problem-name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.gb-problem-file.ignored .gb-problem-name { color: var(--g-ignored); }
+.gb-problem-ignored { margin-left: auto; flex: 0 0 auto; }
+.gb-unmerged .gb-problem-name { flex: 1 1 auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gb-chev { transition: none; }
+}

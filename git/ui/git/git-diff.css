@@ -1,0 +1,225 @@
+/* Git prototype: the diff tab (diffview.js). Colors and geometry of IntelliJ's Diff Viewer; see arastirma/D-kaynak.md §5.3–5.5.
+   Class names of the code tokens come from highlight.js; their colors are variables: VS Code Dark+ in the default skin,
+   IntelliJ's dark scheme in the IntelliJ skin. */
+
+:root {
+  /* ---- diff colors, the real values (DefaultColorSchemesManager.xml, Darcula: DIFF_MODIFIED / DIFF_INSERTED / DIFF_DELETED).
+     "-word" is the full color: changed words, lines without inner changes, the gutter and the shapes between the panes.
+     The plain name is the softer line fill under changed words: 40 % of the full color over the editor (MIDDLE_COLOR_FACTOR 0.6). */
+  --g-diff-mod-word: #385570;
+  --g-diff-ins-word: #294436;
+  --g-diff-del-word: #484a4a;
+  --g-diff-mod: color-mix(in srgb, var(--g-diff-mod-word) 40%, var(--g-editor));
+  --g-diff-ins: color-mix(in srgb, var(--g-diff-ins-word) 40%, var(--g-editor));
+  --g-diff-del: color-mix(in srgb, var(--g-diff-del-word) 40%, var(--g-editor));
+  --g-diff-mod-stripe: #43698d;             /* ERROR_STRIPE_COLOR: marks along the scrollbar */
+  --g-diff-ins-stripe: #447152;
+  --g-diff-del-stripe: #656e76;
+
+  /* ---- the editor of the diff */
+  --gd-bg: var(--g-editor);
+  --gd-text: #d4d4d4;
+  --gd-num: #858585;                        /* line numbers */
+  --gd-num-cur: #c6c6c6;                    /* … of the current difference */
+  --gd-rule: var(--g-line);                 /* lines between text, numbers and headers */
+  --gd-wave: rgba(255, 255, 255, .26);      /* the wave of a collapsed stretch (DIFF_SEPARATOR_WAVE) */
+  --gd-font: Menlo, Monaco, "Courier New", monospace;   /* the default skin's editor: 12 px on an 18 px line */
+  --gd-size: 12px;
+  --gd-line: 18px;
+  --gd-head: 28px;
+  --gd-bar-bg: var(--g-panel);              /* the toolbar's rounded container */
+  --gd-bar-line: var(--g-line-strong);
+  --gd-bar-radius: 9px;
+  --gd-seg-line: var(--g-line-strong);      /* edge of the chosen segment */
+  --gd-note-bg: var(--g-raised);
+
+  /* ---- code tokens: VS Code Dark+ */
+  --gd-tok-keyword: #569cd6;
+  --gd-tok-string: #ce9178;
+  --gd-tok-number: #b5cea8;
+  --gd-tok-comment: #6a9955;
+  --gd-tok-function: #dcdcaa;
+  --gd-tok-type: #4ec9b0;
+  --gd-tok-variable: #9cdcfe;
+  --gd-tok-meta: #c586c0;
+  --gd-tok-tag: #569cd6;
+  --gd-tok-attr: #9cdcfe;
+  --gd-tok-selector: #d7ba7d;
+  --gd-tok-heading: #569cd6;
+  --gd-tok-heading-style: normal;
+  --gd-tok-code: #ce9178;
+  --gd-tok-doc: #6a9955;
+}
+:root[data-git-skin="intellij"] {
+  --gd-text: #bcbec4;                       /* TEXT */
+  --gd-num: #4b5059;                        /* LINE_NUMBERS_COLOR */
+  --gd-num-cur: #a1a3ab;                    /* LINE_NUMBER_ON_CARET_ROW_COLOR */
+  --gd-rule: #313438;
+  --gd-wave: #555555;
+  --gd-font: var(--g-mono);
+  --gd-size: 13px;
+  --gd-line: 22px;
+  --gd-head: 26px;
+  --gd-bar-bg: #26282b;
+  --gd-bar-line: #393b40;
+  --gd-bar-radius: 6px;
+  --gd-seg-line: #606268;
+  /* IntelliJ's dark scheme */
+  --gd-tok-keyword: #cf8e6d;
+  --gd-tok-string: #6aab73;
+  --gd-tok-number: #2aacb8;
+  --gd-tok-comment: #7a7e85;
+  --gd-tok-function: #56a8f5;
+  --gd-tok-type: #bcbec4;
+  --gd-tok-variable: #c77dbb;
+  --gd-tok-meta: #b3ae60;
+  --gd-tok-tag: #d5b778;
+  --gd-tok-attr: #bababa;
+  --gd-tok-selector: #d5b778;
+  --gd-tok-heading: #c77dbb;
+  --gd-tok-heading-style: italic;
+  --gd-tok-code: #6aab73;
+  --gd-tok-doc: #5f826b;
+}
+
+.g-diff { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--gd-bg); outline: none; overflow: hidden; min-width: 0; }
+
+/* ---------------------------------------------------------------- toolbar (the current design: one rounded container) */
+.gd-bar { flex: none; padding: 6px 6px 0; min-width: 0; }
+.gd-toolbar { height: 34px; padding: 0 6px; gap: 2px; border: 1px solid var(--gd-bar-line); border-radius: var(--gd-bar-radius); background: var(--gd-bar-bg); overflow: hidden; }
+.gd-toolbar .g-toolbar-sep { margin: 0 5px; }
+.gd-files { flex: none; padding: 0 5px; color: var(--g-muted); white-space: nowrap; }
+.gd-count { flex: none; padding: 0 6px 0 10px; white-space: nowrap; }
+.gd-seg { display: inline-flex; flex: none; padding: 1px; border: 1px solid var(--g-line-strong); border-radius: var(--g-radius); }
+.gd-seg .g-tool { min-width: 30px; height: 22px; border-radius: calc(var(--g-radius) - 2px); }
+.gd-seg .g-tool.on { background: var(--g-raised); box-shadow: inset 0 0 0 1px var(--gd-seg-line); }
+
+.gd-drop {                                  /* a dropdown button (the History tab's viewer switch uses it) */
+  display: inline-flex; align-items: center; gap: 3px; flex: 0 1 auto; min-width: 44px; height: 24px; padding: 0 5px 0 9px; margin: 0 1px;
+  border: 1px solid var(--g-btn-border); border-radius: var(--g-radius); background: transparent; white-space: nowrap; cursor: pointer;
+}
+.gd-drop > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.gd-drop:hover:not(:disabled) { background: var(--g-hover); }
+.gd-drop:disabled { opacity: .4; cursor: default; }
+
+/* ---------------------------------------------------------------- panes */
+.gd-body { flex: 1 1 0; min-height: 0; min-width: 0; display: flex; position: relative; color: var(--gd-text); }
+.gd-pane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.gd-heads { flex: none; }
+.gd-head {
+  height: var(--gd-head); display: flex; align-items: center; gap: 6px; padding: 0 10px; min-width: 0; white-space: nowrap; overflow: hidden;
+  font-family: var(--g-font); font-size: var(--g-size); color: var(--g-text); border-bottom: 1px solid var(--gd-rule);
+}
+.gd-head.second { background: var(--g-hover); }
+.gd-head .g-ic { margin-left: -3px; }
+.gd-rev { flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
+.gd-rev:hover { text-decoration: underline; }
+.gd-title { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.gd-path { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--g-muted); }
+
+.gd-scroll { flex: 1 1 0; min-height: 0; overflow: auto; font-family: var(--gd-font); font-size: var(--gd-size); line-height: var(--gd-line); }
+.gd-pane.left .gd-scroll::-webkit-scrollbar { width: 0; }     /* one vertical scrollbar, at the right edge; the left pane still scrolls */
+.gd-content { display: flex; min-width: 100%; width: max-content; min-height: 100%; }
+.gd-code { flex: 1 0 auto; white-space: pre; tab-size: 4; cursor: text; }
+.gd-code, .gd-gutter { padding-bottom: var(--gd-pad, 0px); }      /* room below the last line, set by the viewer */
+.gd-ln { height: var(--gd-line); padding: 0 16px 0 8px; }
+.gd-gutter { flex: none; position: sticky; z-index: 1; background: var(--gd-bg); color: var(--gd-num); user-select: none; -webkit-user-select: none; }
+.gd-pane.left .gd-gutter { right: 0; border-left: 1px solid var(--gd-rule); }
+.gd-pane.right .gd-gutter, .gd-pane.uni .gd-gutter, .gd-pane.solo .gd-gutter { left: 0; border-right: 1px solid var(--gd-rule); }
+.gd-gl { height: var(--gd-line); display: flex; align-items: center; justify-content: flex-end; gap: 5px; padding: 0 7px; }
+.gd-n { min-width: calc(var(--gd-digits, 2) * 1ch); text-align: right; }
+.gd-pane.uni .gd-n + .gd-n { margin-left: 5px; }
+.gd-slot { width: 16px; height: 16px; flex: none; display: inline-flex; margin-right: auto; }
+.gd-revert { width: 16px; height: 16px; padding: 0; border: 0; border-radius: calc(var(--g-radius) / 2); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.gd-revert:hover { background: var(--g-press); }
+.gd-revert svg { width: 14px; height: 14px; }
+.gd-revert > span { display: inline-flex; }
+.gd-ic-append { display: none !important; }                      /* ⌘ / Ctrl held: the » arrows show as Append */
+.g-diff.gd-append .gd-pane.left .gd-ic-revert { display: none !important; }
+.g-diff.gd-append .gd-pane.left .gd-ic-append { display: inline-flex !important; }
+
+/* ---- changed lines: full color, or the soft fill when the changed words carry the full one; the gutter is always full */
+.gd-ln.mod, .gd-gl.mod, .gd-w.mod { background: var(--g-diff-mod-word); }
+.gd-ln.ins, .gd-gl.ins, .gd-w.ins { background: var(--g-diff-ins-word); }
+.gd-ln.del, .gd-gl.del, .gd-w.del { background: var(--g-diff-del-word); }
+.gd-w { display: inline-block; height: var(--gd-line); vertical-align: top; }     /* a changed word fills the line's height */
+.gd-ln.mod.soft { background: var(--g-diff-mod); }
+.gd-ln.ins.soft { background: var(--g-diff-ins); }
+.gd-ln.del.soft { background: var(--g-diff-del); }
+.gd-pane.uni .gd-ln.ins .gd-w { background: var(--g-diff-ins-word); }   /* unified: a modification reads as removed + added */
+.gd-pane.uni .gd-ln.del .gd-w { background: var(--g-diff-del-word); }
+/* a change with nothing on this side: a 1 px line between two rows */
+.gd-ln.et-ins, .gd-gl.et-ins { box-shadow: inset 0 1px 0 var(--g-diff-ins-word); }
+.gd-ln.et-del, .gd-gl.et-del { box-shadow: inset 0 1px 0 var(--g-diff-del-word); }
+.gd-ln.eb-ins, .gd-gl.eb-ins { box-shadow: inset 0 -1px 0 var(--g-diff-ins-word); }
+.gd-ln.eb-del, .gd-gl.eb-del { box-shadow: inset 0 -1px 0 var(--g-diff-del-word); }
+/* the current difference: brighter numbers and an accent bar at the gutter's outer edge */
+.gd-gl.cur { color: var(--gd-num-cur); box-shadow: inset 2px 0 0 var(--g-accent); }
+.gd-pane.left .gd-gl.cur { box-shadow: inset -2px 0 0 var(--g-accent); }
+
+/* ---- the strip between the panes */
+.gd-divider { flex: none; width: 24px; display: flex; flex-direction: column; background: var(--gd-bg); }
+.gd-divider-body { flex: 1 1 0; min-height: 0; position: relative; overflow: hidden; }
+.gd-links { position: absolute; left: 0; top: 0; display: block; }
+.gd-links .mod { fill: var(--g-diff-mod-word); }
+.gd-links .ins { fill: var(--g-diff-ins-word); }
+.gd-links .del { fill: var(--g-diff-del-word); }
+.gd-links .wave { fill: none; stroke: var(--gd-wave); stroke-width: 1; }
+
+/* ---- collapsed unchanged lines: one row with a wave (period 16 px, 6 px high), a click opens it */
+.gd-fold, .gd-gl.fold { position: relative; display: block; width: 100%; height: var(--gd-line); padding: 0; border: 0; background: transparent; cursor: pointer; }
+.gd-fold::before, .gd-gl.fold::before {
+  content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 4px); height: 8px; background: var(--gd-wave);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 1Q2 1 4 4Q6 7 8 7Q10 7 12 4Q14 1 16 1' fill='none' stroke='black'/%3E%3C/svg%3E") 0 0 / 16px 8px repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 1Q2 1 4 4Q6 7 8 7Q10 7 12 4Q14 1 16 1' fill='none' stroke='black'/%3E%3C/svg%3E") 0 0 / 16px 8px repeat-x;
+}
+.gd-fold:hover::before, .gd-fold:focus-visible::before { background: var(--g-text); }
+.gd-fold:hover, .gd-fold:focus-visible { background: var(--g-hover); outline: none; }
+
+/* ---- marks of the changes along the scrollbar */
+.gd-stripe { position: absolute; right: 0; top: var(--gd-head); bottom: 10px; width: 10px; pointer-events: none; z-index: 2; }
+.gd-pane.uni .gd-stripe { top: calc(var(--gd-head) * 2); }
+.gd-stripe i { position: absolute; right: 3px; width: 4px; min-height: 2px; }
+.gd-stripe .mod { background: var(--g-diff-mod-stripe); }
+.gd-stripe .ins { background: var(--g-diff-ins-stripe); }
+.gd-stripe .del { background: var(--g-diff-del-stripe); }
+
+.gd-note, .gd-hint {
+  position: absolute; left: 50%; transform: translateX(-50%); z-index: 3; padding: 5px 12px; border: 1px solid var(--g-line-strong); border-radius: var(--g-radius);
+  background: var(--gd-note-bg); color: var(--g-text); font-family: var(--g-font); font-size: var(--g-size); white-space: nowrap; pointer-events: none;
+}
+.gd-note { top: calc(var(--gd-head) + 10px); }
+.gd-hint { bottom: 22px; box-shadow: var(--g-shadow); }
+/* binary files, files over the size cap, a diff too big to compute: IntelliJ's message in place of the panes */
+.gd-msgbody { align-items: center; justify-content: center; background: var(--gd-bg); }
+.gd-msg { padding: 24px; color: var(--g-dim); font-family: var(--g-font); font-size: var(--g-size); text-align: center; }
+/* a file shown on its own (Jump to Source without an editor): no change colors */
+.gd-plain .gd-ln.ins, .gd-plain .gd-gl.ins, .gd-plain .gd-ln.del, .gd-plain .gd-gl.del { background: none; box-shadow: none; }
+.gd-plain .gd-stripe { display: none; }
+/* Align Changes In Side-by-Side Diff: the empty rows that even out a change, in its soft color */
+.gd-ln.pad.mod { background: var(--g-diff-mod); }
+.gd-ln.pad.ins { background: var(--g-diff-ins); }
+.gd-ln.pad.del { background: var(--g-diff-del); }
+/* the new toolbar: count, viewer switch, gear at the right end; the local change's "Include into commit" box */
+.gd-toolbar .gd-seg { margin: 0 4px; }
+.gd-include { flex: none; margin-right: 2px; }
+/* the last line of the side without a final newline */
+.gd-eof { margin-left: 12px; color: var(--g-muted); font-family: var(--g-font); font-size: 11px; font-style: italic; user-select: none; }
+
+/* ---------------------------------------------------------------- code tokens (highlight.js classes) */
+.gd-code .hljs-keyword, .gd-code .hljs-literal, .gd-code .hljs-built_in, .gd-code .hljs-selector-pseudo { color: var(--gd-tok-keyword); }
+.gd-code .hljs-string, .gd-code .hljs-regexp, .gd-code .hljs-char, .gd-code .hljs-symbol { color: var(--gd-tok-string); }
+.gd-code .hljs-number { color: var(--gd-tok-number); }
+.gd-code .hljs-comment, .gd-code .hljs-quote { color: var(--gd-tok-comment); }
+.gd-code .hljs-doctag { color: var(--gd-tok-doc); }
+.gd-code .hljs-title, .gd-code .hljs-title.function_ { color: var(--gd-tok-function); }
+.gd-code .hljs-type, .gd-code .hljs-title.class_ { color: var(--gd-tok-type); }
+.gd-code .hljs-variable, .gd-code .hljs-property, .gd-code .hljs-params .hljs-variable, .gd-code .hljs-template-variable { color: var(--gd-tok-variable); }
+.gd-code .hljs-meta, .gd-code .hljs-meta .hljs-keyword { color: var(--gd-tok-meta); }
+.gd-code .hljs-tag, .gd-code .hljs-name { color: var(--gd-tok-tag); }
+.gd-code .hljs-attr, .gd-code .hljs-attribute { color: var(--gd-tok-attr); }
+.gd-code .hljs-selector-class, .gd-code .hljs-selector-id, .gd-code .hljs-selector-tag, .gd-code .hljs-selector-attr { color: var(--gd-tok-selector); }
+.gd-code .hljs-section { color: var(--gd-tok-heading); font-style: var(--gd-tok-heading-style); }
+.gd-code .hljs-code, .gd-code .hljs-bullet, .gd-code .hljs-link { color: var(--gd-tok-code); }
+.gd-code .hljs-strong { font-weight: 700; }
+.gd-code .hljs-emphasis { font-style: italic; }

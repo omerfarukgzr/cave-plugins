@@ -1,0 +1,46 @@
+{
+  "manifestVersion": 2,
+  "id": "git",
+  "name": "Git",
+  "version": "0.1.0",
+  "description": "IntelliJ tarzı Git arayüzü: Commit ve Git sekmeleri sağ kolonda, diff ortada.",
+  "symbol": "arrow.triangle.branch",
+  "categories": [
+    "git"
+  ],
+  "execution": "trusted",
+  "requires": [
+    {
+      "runtime": "node",
+      "version": ">=20",
+      "command": "node",
+      "hint": "Git eklentisi Node istiyor"
+    }
+  ],
+  "service": {
+    "command": "sh ./sunucu.sh serve",
+    "start": "onDemand",
+    "protocol": "none",
+    "port": true
+  },
+  "contributes": {
+    "panels": [
+      {
+        "id": "commit",
+        "title": "Commit",
+        "url": "http://127.0.0.1:{port}/?view=commit&repo={folder}",
+        "icon": "icons/toolwindow-commit.svg"
+      },
+      {
+        "id": "git",
+        "title": "Git",
+        "url": "http://127.0.0.1:{port}/?view=log&repo={folder}",
+        "icon": "icons/toolwindow-vcs.svg"
+      }
+    ],
+    "centre": {
+      "title": "Git",
+      "url": "http://127.0.0.1:{port}/?view=tab&repo={folder}"
+    }
+  }
+}

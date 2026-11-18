@@ -1,0 +1,59 @@
+#!/bin/sh
+# git-panel launcher. A host may run it from a login shell where nvm is not loaded (`/bin/zsh -lc`), so node is
+# looked up in this order: node on PATH, the newest ~/.nvm/versions/node/*/bin/node, /opt/homebrew/bin/node, /usr/local/bin/node.
+# GIT_PANEL_NODE overrides the search.
+
+# The folder this script lives in, following symlinks (npm link, ~/bin links).
+self="$0"
+while [ -h "$self" ]; do
+  link=$(readlink "$self")
+  case "$link" in
+    /*) self="$link" ;;
+    *) self="$(dirname "$self")/$link" ;;
+  esac
+done
+here=$(cd "$(dirname "$self")" && pwd -P)
+cli="$here/../server/cli.js"
+
+# Prints the newest node under ~/.nvm by numeric version (v22.10.0 > v22.9.1 > v20.18.0).
+newest_nvm_node() {
+  best=""
+  best_key=""
+  for bin in "$HOME"/.nvm/versions/node/v*/bin/node; do
+    [ -x "$bin" ] || continue
+    ver=${bin%/bin/node}
+    ver=${ver##*/v}
+    major=${ver%%.*}
+    rest=${ver#*.}
+    minor=${rest%%.*}
+    patch=${rest#*.}
+    patch=${patch%%[!0-9]*}
+    key=$(printf '%05d%05d%05d' "$major" "$minor" "$patch" 2>/dev/null) || continue
+    if [ -z "$best_key" ] || [ "$key" \> "$best_key" ]; then
+      best="$bin"
+      best_key="$key"
+    fi
+  done
+  [ -n "$best" ] && printf '%s\n' "$best"
+}
+
+node_bin=""
+if [ -n "$GIT_PANEL_NODE" ] && [ -x "$GIT_PANEL_NODE" ]; then
+  node_bin="$GIT_PANEL_NODE"
+elif command -v node >/dev/null 2>&1; then
+  node_bin=$(command -v node)
+else
+  node_bin=$(newest_nvm_node)
+  if [ -z "$node_bin" ]; then
+    for c in /opt/homebrew/bin/node /usr/local/bin/node; do
+      if [ -x "$c" ]; then node_bin="$c"; break; fi
+    done
+  fi
+fi
+
+if [ -z "$node_bin" ]; then
+  echo "git-panel: node not found (PATH, ~/.nvm, /opt/homebrew/bin, /usr/local/bin)" >&2
+  exit 127
+fi
+
+exec "$node_bin" "$cli" "$@"
