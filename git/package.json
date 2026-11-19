@@ -1,6 +1,6 @@
 {
   "name": "git-panel",
-  "version": "0.1.0",
+  "version": "0.1.14",
   "description": "IntelliJ-style Git panel: a standard base (Node engine + web UI) with separate host plugins, or a plain browser.",
   "private": true,
   "type": "module",

@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "git",
   "name": "Git",
-  "version": "0.1.0",
+  "version": "0.1.14",
   "description": "IntelliJ tarzı Git arayüzü: Commit ve Git sekmeleri sağ kolonda, diff ortada.",
   "symbol": "arrow.triangle.branch",
   "categories": [
