@@ -5,10 +5,44 @@
   "plugins": [
     {
       "id": "omerfarukgzr.git",
-      "source": { "kind": "git", "url": "https://github.com/omerfarukgzr/cave-plugins", "ref": "main", "path": "git" },
+      "source": {
+        "kind": "git",
+        "url": "https://github.com/omerfarukgzr/cave-plugins",
+        "ref": "main",
+        "path": "git"
+      },
       "description": "IntelliJ tarzı Git arayüzü: Commit ve Git sekmeleri sağ kolonda, diff ortada.",
-      "categories": ["git"],
+      "categories": [
+        "git"
+      ],
       "releases": [
+        {
+          "version": "0.1.14",
+          "commit": "e288142b8c08c03bf7b986a4d276552f4d2a58db",
+          "contentHash": "95cb490194f88bd9f6a826492aa3113fe5c4f1270611138c0c7278a145ae6b4e",
+          "execution": "trusted",
+          "minimumCave": "0.1",
+          "name": "Git",
+          "capabilities": [],
+          "contributes": [
+            {
+              "kind": "panel",
+              "name": "Commit"
+            },
+            {
+              "kind": "panel",
+              "name": "Git"
+            },
+            {
+              "kind": "centre",
+              "name": "Git"
+            }
+          ],
+          "repository": "https://github.com/omerfarukgzr/cave-plugins",
+          "updatedAt": "2026-11-19T14:16:32+03:00",
+          "changelog": "Güncelleme denemesi: eklentide değişiklik yok, sürüm Orca ile eşitlendi.",
+          "symbol": "arrow.triangle.branch"
+        },
         {
           "version": "0.1.0",
           "commit": "fb59ea819a36b9f68a8f3fd6c541cf4ab4348738",
@@ -18,9 +52,18 @@
           "name": "Git",
           "capabilities": [],
           "contributes": [
-            { "kind": "panel", "name": "Commit" },
-            { "kind": "panel", "name": "Git" },
-            { "kind": "centre", "name": "Git" }
+            {
+              "kind": "panel",
+              "name": "Commit"
+            },
+            {
+              "kind": "panel",
+              "name": "Git"
+            },
+            {
+              "kind": "centre",
+              "name": "Git"
+            }
           ],
           "repository": "https://github.com/omerfarukgzr/cave-plugins",
           "updatedAt": "2026-11-18T18:02:50+03:00",
